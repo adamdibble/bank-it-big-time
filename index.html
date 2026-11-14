@@ -133,7 +133,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 2.5</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 2.6</p>
 </section>
 
 <!-- GAME -->
@@ -198,9 +198,9 @@ const RULES = [
   {k:'suddenDeath', t:'Sudden death', d:'If the top two players finish within 100 points of each other, they play one bonus round, just the two of them, to decide the winner. Everyone else sits out. Still exactly tied? Another bonus round.', type:'bool', def:true},
   {k:'loserBaby', t:'I’m a loser, baby', d:'Roll 10 busting 7s in one game and you’re disqualified on the spot. Your points are split equally among the remaining players, and you sit out the rest of the game.', type:'bool', def:true},
   {k:'pennyPincher', t:'Penny pincher', d:'Be the first player to bank in a round 5 times and your points are split equally among the other players. You’re left with 1 point, and your count starts over.', type:'bool', def:true},
-  {k:'devil', t:'The devil’s number', d:'If three 6s are rolled in a row in a round (by anyone), every player who hasn’t banked yet loses all their points and the round ends. Enter double 3s as 6, not Doubles, so they count.', type:'bool', def:true},
+  {k:'devil', t:'The devil’s number', d:'If three non-double 6s are rolled in a row in a round (by anyone), every player who hasn’t banked yet loses all their points and the round ends. Just tap 6; a Doubles roll breaks the streak.', type:'bool', def:true},
   {k:'optimus', t:'Optimus Prime', d:'The first player to roll every odd prime total during the game (3, 5, 7 and 11) gets +1,000 straight to their score, not the bank. Only one player can win it.', type:'bool', def:true},
-  {k:'pirate', t:'Pirate’s booty', d:'If three 8s are rolled in a row in a round (by anyone), whoever rolled the third one steals 10% of every other player’s score. Enter double 4s as 8, not Doubles, so they count.', type:'bool', def:true},
+  {k:'pirate', t:'Pirate’s booty', d:'If three non-double 8s are rolled in a row in a round (by anyone), whoever rolled the third one steals 10% of every other player’s score. Just tap 8; a Doubles roll breaks the streak.', type:'bool', def:true},
   {k:'reverse', t:'Reverse', d:'Rolling a 3 flips the direction of play, like an UNO reverse card. It stays that way until someone rolls another 3. Best with 3 or more players.', type:'bool', def:true},
   {k:'robinHood', t:'Robin Hood', d:'Rolling an 11 moves 100 points from the leader’s score to the player in last place.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
@@ -563,8 +563,8 @@ function renderGame(pop){
   $('roller').innerHTML=`<b>${esc(S.names[g.roller])}</b> is rolling`+(st.reverse&&g.dir===-1?' · <span style="color:#9334e6;font-weight:700">🔁 reversed</span>':'')
     + (st.stackDoubles && g.streak>0 ? ` · <span style="color:var(--accent2);font-weight:700">Doubles now = ×4</span>` : '')
     + (st.matchRoll && g.lastSum ? `<br>Last roll: ${g.lastSum} · match it for ×2` : '')
-    + (st.pirate && g.eightRun===2 ? `<br><span style="color:#b06000;font-weight:700">🏴‍☠️ Two 8s in a row — one more and the pirate strikes</span>` : '')
-    + (st.devil && g.sixRun===2 ? `<br><span style="color:var(--warn);font-weight:700">😈 Two 6s in a row — one more and the devil strikes</span>` : '')
+    + (st.pirate && g.eightRun===2 ? `<br><span style="color:#b06000;font-weight:700">🏴‍☠️ Two 8s in a row — one more (not doubles) and the pirate strikes</span>` : '')
+    + (st.devil && g.sixRun===2 ? `<br><span style="color:var(--warn);font-weight:700">😈 Two 6s in a row — one more (not doubles) and the devil strikes</span>` : '')
     + (st.straight && g.tHist && g.tHist.length ? `<br>Straight watch: ${g.tHist.join(' · ')}` : '');
   armDbl=false;
   const oneTapDbl = !inSafe && st.doublesDouble;
