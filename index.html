@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bank It! Big Time!</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffffff;--ink:#14213d;--muted:#6b7280;--line:#e5e7eb;--card:#f8fafc;--accent:#0f9d58;--accent2:#0b7a44;--warn:#d93025;--gold:#f4b400;--surface:#ffffff;}
+body.dark{--bg:#0f1115;--ink:#e8eaed;--muted:#9aa0a6;--line:#2e333b;--card:#1a1d23;--surface:#16191e;--accent:#1e9e5a;--accent2:#5cd394;--warn:#f28b82;}
+body.dark .pill.safe{background:#123222;border-color:#1f5a3a}
+body.dark .pill.danger{background:#3a1715;border-color:#6b2a25}
+body.dark .num.seven{border-color:#6b2a25}
+body.dark .num.seven.safe7{border-color:#1f5a3a}
+body.dark .slider{background:#3c4043}
+body.dark .dblbtn{border-color:#8ab4f8;color:#8ab4f8}
+body.dark .bh.lead{color:#fdd663}
+body.dark .fx{box-shadow:0 18px 50px #000a}
+body{transition:background .2s,color .2s}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;
+ padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 20px);max-width:560px;margin-inline:auto}
+h1{font-size:28px;font-weight:800;margin:4px 0 2px;letter-spacing:-.5px}
+h2{font-size:16px;margin:22px 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sub{color:var(--muted);margin:0 0 8px;font-size:14px}
+button{font:inherit;cursor:pointer;border:none;border-radius:12px}
+.btn{border-radius:12px;background:var(--accent);color:#fff;font-weight:700;padding:14px 18px;font-size:17px;width:100%}
+.btn:active{background:var(--accent2)}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.small{width:auto;padding:8px 12px;font-size:14px}
+.row{display:flex;gap:8px;align-items:center}
+input[type=text]{flex:1;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.plist{list-style:none;padding:0;margin:8px 0}
+.plist li{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+.x{background:none;color:var(--warn);font-size:20px;padding:0 6px}
+.rule{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--line)}
+.rule .t{font-weight:600}.rule .d{font-size:13px;color:var(--muted);margin-top:2px}
+.switch{position:relative;width:50px;height:30px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#cbd5e1;border-radius:30px;transition:.2s}
+.slider:before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px #0003}
+.switch input:checked+.slider{background:var(--accent)}
+.switch input:checked+.slider:before{transform:translateX(20px)}
+.colhead{background:none;padding:0;margin:22px 0 8px;text-align:left;color:inherit;border-radius:0;display:block}
+.top .colhead{margin:0}
+.colhead h2{white-space:nowrap;font-size:15px}
+[data-all]{white-space:nowrap}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.seg button{min-width:48px;height:36px;background:var(--surface);color:var(--ink);font-weight:700;font-size:15px;border-radius:0;border-left:1px solid var(--line)}
+.seg button:first-child{border-left:none}
+.seg button.on{background:var(--accent);color:#fff}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
+.stepper button{width:34px;height:34px;background:var(--card);border:1px solid var(--line);font-size:18px;font-weight:700}
+.stepper span{min-width:28px;text-align:center;font-weight:700}
+.hidden{display:none!important}
+.top{display:flex;justify-content:space-between;align-items:center}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--card);border:1px solid var(--line)}
+.pill.safe{background:#e6f4ea;border-color:#b7dfc4;color:var(--accent2)}
+.pill.danger{background:#fdecea;border-color:#f5c2bd;color:var(--warn)}
+.bankbox{text-align:center;margin:14px 0 6px;padding:18px 10px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.bankbox .lbl{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.bankbox .amt{font-size:64px;font-weight:800;letter-spacing:-2px;line-height:1.05}
+.bankbox .amt.pop{animation:pop .35s}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.msg{min-height:22px;text-align:center;font-weight:600;margin:6px 0 10px}
+.roller{text-align:center;font-size:15px;color:var(--muted);margin-bottom:8px}
+.roller b{color:var(--ink)}
+.dice{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.num{height:60px;background:var(--surface);border:2px solid var(--line);border-radius:14px;font-size:26px;font-weight:800;color:var(--ink)}
+.num:active{background:var(--card)}
+.num.seven{border-color:#f5c2bd;color:var(--warn)}
+.num.seven.safe7{border-color:#b7dfc4;color:var(--accent2)}
+.num:disabled{opacity:.25}
+.dblbtn{height:60px;border-radius:14px;font-size:16px;font-weight:800;background:var(--surface);border:2px solid #1a73e8;color:#1a73e8}
+.dblbtn.on{background:#1a73e8;color:#fff}
+.picked{text-align:center;color:var(--muted);font-size:14px;margin:8px 0}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.pcard{color:var(--ink);padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:left}
+.pcard .n{font-weight:700;font-size:15px;display:flex;justify-content:space-between}
+.pcard .s{font-size:22px;font-weight:800;margin-top:2px}
+.pcard .bh{font-size:13px;font-weight:700;color:var(--warn);margin-top:1px}
+.pcard .bh.lead{color:#b07d00}
+.pcard .a{font-size:12px;color:var(--muted);margin-top:4px}
+.pcard.turn{border-color:var(--gold);box-shadow:0 0 0 2px #f4b40055}
+.pcard.banked{background:var(--card);opacity:.65}
+.pcard:not(.banked) .a{color:var(--accent2);font-weight:700}
+.bar{display:flex;gap:8px;margin-top:14px}
+.overlay{position:fixed;inset:0;background:#0006;display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px 14px calc(env(safe-area-inset-bottom) + 16px)}
+.log{font-size:13px;color:var(--muted);margin-top:16px;max-height:150px;overflow:auto;border-top:1px solid var(--line);padding-top:8px}
+.log div{padding:2px 0}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+td{padding:10px 6px;border-bottom:1px solid var(--line);font-size:17px}
+td:last-child{text-align:right;font-weight:800}
+.help h3{margin:18px 0 6px;font-size:17px}
+.help p,.help li{font-size:15px;line-height:1.45}
+.help ul{padding-left:20px;margin:6px 0}
+.help .off{opacity:.5}
+.sumcard{margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.sumcard h3{margin:0 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sumcard div{padding:4px 0;font-size:15px}
+.trophy{font-size:56px;text-align:center}
+.fx{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 18%);transform:translate(-50%,0) scale(.6);opacity:0;z-index:9;
+ width:min(86vw,420px);text-align:center;padding:22px 16px;border-radius:22px;background:var(--surface);border:3px solid var(--c,#0f9d58);
+ box-shadow:0 18px 50px #0004;pointer-events:none;transition:transform .22s cubic-bezier(.2,1.6,.4,1),opacity .18s}
+.fx.show{transform:translate(-50%,0) scale(1);opacity:1;pointer-events:auto}
+.fx .e{font-size:64px;line-height:1}
+.fx .t{font-size:28px;font-weight:800;margin-top:6px;color:var(--c,#0f9d58);letter-spacing:-.5px}
+.fx .u{font-size:16px;color:var(--muted);margin-top:4px;font-weight:600}
+.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<section id="setup">
+  <h1>Bank It! Big Time! 💰</h1>
+  <p class="sub">Scorekeeper for real dice · <button type="button" id="howLink" onclick="showHelp()" style="background:none;padding:0;color:var(--accent2);font-weight:700;text-decoration:underline;font-size:inherit;border-radius:0">How to play</button></p>
+  <div id="resumeWrap" class="hidden" style="margin:10px 0 4px"><button class="btn" id="resumeBtn">▶ Resume game</button>
+    <p class="sub" style="text-align:center;margin-top:6px">Players are locked while a game is in progress.</p></div>
+
+  <h2>Players</h2>
+  <form class="row" id="addForm">
+    <input type="text" id="pname" placeholder="Add player name" maxlength="16" autocomplete="off">
+    <button class="btn small" type="submit">Add</button>
+  </form>
+  <ul class="plist" id="plist"></ul>
+
+  <h2>Game</h2>
+  <div id="gameOpts"></div>
+
+  <div id="ruleOpts"></div>
+
+  <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 2.5</p>
+</section>
+
+<!-- GAME -->
+<section id="game" class="hidden">
+  <div class="top">
+    <span class="pill" id="roundPill">Round 1/20</span>
+    <span class="pill safe" id="phasePill">Safe roll 1/3</span>
+    <span class="row"><button class="btn ghost small" id="darkBtn" aria-label="Dark mode">🌙</button><button class="btn ghost small" id="homeBtn" aria-label="Home">🏠</button><button class="btn ghost small" id="menuBtn">⚙︎</button></span>
+  </div>
+
+  <div class="bankbox"><div class="lbl">Bank</div><div class="amt" id="bankAmt">0</div></div>
+  <div class="msg" id="msg"></div>
+  <div class="roller" id="roller"></div>
+
+  <div class="dice" id="dice"></div>
+  <div class="picked" id="picked">Tap the total you rolled</div>
+
+  <h2 style="margin-top:12px">Tap a player to bank</h2>
+  <div class="players" id="pcards"></div>
+
+  <div class="bar">
+    <button class="btn ghost" id="undoBtn">↶ Undo</button>
+    <button class="btn ghost" id="scoresBtn">Scores</button>
+  </div>
+  <div class="log" id="log"></div>
+</section>
+
+<!-- END -->
+<section id="end" class="hidden">
+  <div class="trophy">🏆</div>
+  <h1 style="text-align:center" id="winner"></h1>
+  <table id="finalTable"></table>
+  <div id="summary"></div>
+  <div class="bar">
+    <button class="btn" id="copySum">📋 Copy recap</button>
+    <a class="btn" id="smsSum" style="text-align:center;text-decoration:none;display:block">💬 Text it</a>
+  </div>
+  <textarea id="sumText" readonly class="hidden" style="width:100%;height:180px;margin-top:8px;font:13px/1.4 Inter,sans-serif;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);color:var(--ink)"></textarea>
+  <div class="bar" style="flex-direction:column">
+    <button class="btn" id="againBtn">▶ Play again (same players &amp; rules)</button>
+    <button class="btn ghost" id="newBtn">⚙︎ Change rules or players</button>
+  </div>
+</section>
+
+<!-- Sheet -->
+<div class="fx" id="fx"><div class="e" id="fxE"></div><div class="t" id="fxT"></div><div class="u" id="fxU"></div></div>
+<div class="overlay hidden" id="overlay"><div class="sheet" id="sheet"></div></div>
+
+<script>
+const RULES = [
+  {k:'seven70', std:true, t:'Opening 7 = 70', d:'A 7 during the safe rolls adds 70 instead of 7.', type:'bool', def:true},
+  {k:'doublesDouble', std:true, t:'Doubles double the bank', d:'After the safe rolls, doubles double the bank.', type:'bool', def:true},
+  {k:'stackDoubles', t:'Stacking doubles', d:'Back-to-back doubles escalate: the first doubles ×2, and the next doubles in a row ×4. ×4 is the cap, so a third (or more) in a row is still ×4. Any non-doubles roll resets the stack.', type:'bool', def:true},
+  {k:'matchRoll', t:'Copycat roll', d:'If you roll the same total as the player before you, your roll counts double (e.g., 8 then 8 adds 16).', type:'bool', def:true},
+  {k:'straight', t:'Straight = +1000 to bank', d:'If the table’s last 4 rolls in a round (any players, any order) are 4 numbers in a row, like 3-4-5-6, 1,000 points go into the bank.', type:'bool', def:true},
+  {k:'finalDouble', t:'Final round frenzy', d:'In the last round, banking pays double the bank.', type:'bool', def:true},
+  {k:'bustCurse', t:'Triple bust curse', d:'If the same player rolls the busting 7 that ends three rounds in a row, their score drops to 0. A round that ends with everyone banking breaks the streak.', type:'bool', def:true},
+  {k:'hatTrick', t:'Doubles hat trick', d:'Roll doubles on three of your own turns in a row within one round and you get +500 straight to your score, not the bank. Safe-roll doubles don’t count, and the count resets every round.', type:'bool', def:true},
+  {k:'happyHour', t:'Happy hour (round 5)', d:'In round 5, every roll’s points count double, including Lucky 7s (140).', type:'bool', def:true},
+  {k:'lucky7Round', t:'Lucky 7 round (round 7)', d:'In round 7, the first 5 rolls are safe instead of 3, so there’s more time to build the bank.', type:'bool', def:true},
+  {k:'ocean11', t:'Ocean’s 11 (round 11)', d:'In round 11, an 11 adds 1,100 to the bank instead of 11. Robin Hood still triggers too.', type:'bool', def:true},
+  {k:'suddenDeath', t:'Sudden death', d:'If the top two players finish within 100 points of each other, they play one bonus round, just the two of them, to decide the winner. Everyone else sits out. Still exactly tied? Another bonus round.', type:'bool', def:true},
+  {k:'loserBaby', t:'I’m a loser, baby', d:'Roll 10 busting 7s in one game and you’re disqualified on the spot. Your points are split equally among the remaining players, and you sit out the rest of the game.', type:'bool', def:true},
+  {k:'pennyPincher', t:'Penny pincher', d:'Be the first player to bank in a round 5 times and your points are split equally among the other players. You’re left with 1 point, and your count starts over.', type:'bool', def:true},
+  {k:'devil', t:'The devil’s number', d:'If three 6s are rolled in a row in a round (by anyone), every player who hasn’t banked yet loses all their points and the round ends. Enter double 3s as 6, not Doubles, so they count.', type:'bool', def:true},
+  {k:'optimus', t:'Optimus Prime', d:'The first player to roll every odd prime total during the game (3, 5, 7 and 11) gets +1,000 straight to their score, not the bank. Only one player can win it.', type:'bool', def:true},
+  {k:'pirate', t:'Pirate’s booty', d:'If three 8s are rolled in a row in a round (by anyone), whoever rolled the third one steals 10% of every other player’s score. Enter double 4s as 8, not Doubles, so they count.', type:'bool', def:true},
+  {k:'reverse', t:'Reverse', d:'Rolling a 3 flips the direction of play, like an UNO reverse card. It stays that way until someone rolls another 3. Best with 3 or more players.', type:'bool', def:true},
+  {k:'robinHood', t:'Robin Hood', d:'Rolling an 11 moves 100 points from the leader’s score to the player in last place.', type:'bool', def:true},
+  {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
+  {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
+];
+const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
+  hatTrick:'🎩',happyHour:'🎉',lucky7Round:'🌈',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
+  optimus:'🚛',reverse:'🔁',pirate:'🏴‍☠️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+const ttl=r=>(RULE_ICON[r.k]?RULE_ICON[r.k]+' ':'')+r.t;
+const GAME_OPTS = [
+  {k:'rounds', t:'Rounds', type:'choice', def:20, opts:[10,15,20]},
+  {k:'dark', t:'Dark mode', d:'Easier on the eyes for late-night games.', type:'bool', def:false},
+  {k:'sound', t:'Sound effects', d:'A unique tone plays when each special rule triggers.', type:'bool', def:true},
+  {k:'safe', t:'Safe rolls per round', d:'Opening rolls where a 7 can’t bust.', type:'num', def:3, min:0, max:6, step:1},
+];
+
+let S = load() || fresh();
+[...RULES,...GAME_OPTS].forEach(r=>{ if(S.settings[r.k]===undefined) S.settings[r.k]=r.def; });
+if(![10,15,20].includes(S.settings.rounds)) S.settings.rounds=[10,15,20].reduce((a,b)=>Math.abs(b-S.settings.rounds)<Math.abs(a-S.settings.rounds)?b:a);
+function fresh(){
+  const settings={}; [...RULES,...GAME_OPTS].forEach(r=>settings[r.k]=r.def);
+  return {screen:'setup', names:[], settings, g:null, hist:[]};
+}
+function save(){ try{localStorage.setItem('bankDice',JSON.stringify(S))}catch(e){} }
+function load(){ try{return JSON.parse(localStorage.getItem('bankDice'))}catch(e){return null} }
+const $=id=>document.getElementById(id);
+
+/* ---------- setup ---------- */
+function renderSetup(){
+  const live = !!(S.g && !S.g.over);
+  $('addForm').classList.toggle('hidden', live);
+  $('plist').innerHTML = S.names.map((n,i)=>`<li><span>${esc(n)}</span>${live?'':`<button class="x" data-i="${i}">×</button>`}</li>`).join('')
+    || `<li style="color:var(--muted)">Add at least 2 players</li>`;
+  $('plist').querySelectorAll('.x').forEach(b=>b.onclick=()=>{S.names.splice(+b.dataset.i,1);save();renderSetup()});
+  $('gameOpts').innerHTML = GAME_OPTS.map(optHTML).join('');
+  $('ruleOpts').innerHTML = rulesHTML();
+  bindOpts(document.getElementById('setup'), renderSetup);
+  $('resumeWrap').classList.toggle('hidden', !live);
+  if(live) $('resumeBtn').textContent=`▶ Resume game · Round ${S.g.round}/${S.settings.rounds}`;
+  $('startBtn').textContent = live ? 'Start a new game instead' : 'Start game';
+  $('startBtn').className = live ? 'btn ghost' : 'btn';
+  delete $('startBtn').dataset.armed;
+}
+function optHTML(r){
+  const v=S.settings[r.k];
+  const live = !!(S.g && !S.g.over);
+  const locked = r.k==='rounds' && live;
+  if(live && !['dark','sound','rounds'].includes(r.k)){   // game settings lock once play starts
+    const shown = r.type==='bool' ? `<span class="pill" style="flex:none">${v?'On':'Off'} 🔒</span>` : `<span class="pill" style="flex:none">${v} 🔒</span>`;
+    return `<div class="rule" style="opacity:.75"><div><div class="t">${ttl(r)}</div>${r.d?`<div class="d">${r.d}</div>`:''}</div>${shown}</div>`;
+  }
+  if(locked) return `<div class="rule"><div><div class="t">${ttl(r)}</div><div class="d">Locked once a game starts</div></div><div class="seg">${r.opts.map(o=>`<button disabled class="${v===o?'on':''}" style="${v===o?'':'opacity:.35'}">${o}</button>`).join('')}</div></div>`;
+  const ctl = r.type==='choice'
+    ? `<div class="seg">${r.opts.map(o=>`<button data-k="${r.k}" data-c="${o}" class="${v===o?'on':''}">${o}</button>`).join('')}</div>`
+    : r.type==='bool'
+    ? `<label class="switch"><input type="checkbox" data-k="${r.k}" ${v?'checked':''}><span class="slider"></span></label>`
+    : `<div class="stepper"><button data-k="${r.k}" data-d="-1">−</button><span>${v}</span><button data-k="${r.k}" data-d="1">+</button></div>`;
+  return `<div class="rule"><div><div class="t">${ttl(r)}</div>${r.d?`<div class="d">${r.d}</div>`:''}</div>${ctl}</div>`;
+}
+function rulesHTML(){
+  const sp=RULES.filter(r=>!r.std), on=sp.filter(r=>S.settings[r.k]).length;
+  S.ui = S.ui || {std:true, sp:true};   // true = collapsed
+  const std=RULES.filter(r=>r.std), stdOn=std.filter(r=>S.settings[r.k]).length;
+  const arrow=c=>`<span style="display:inline-block;width:14px">${c?'▸':'▾'}</span>`;
+  return `<button class="colhead" data-col="std"><h2 style="margin:0">${arrow(S.ui.std)}Standard rules <span style="text-transform:none;letter-spacing:0">(${stdOn}/${std.length} on)</span></h2></button>
+  ${S.ui.std?'':std.map(optHTML).join('')}
+  <div class="top" style="margin-top:22px"><button class="colhead" data-col="sp"><h2 style="margin:0">${arrow(S.ui.sp)}Special rules <span style="text-transform:none;letter-spacing:0">(${on}/${sp.length} on)</span></h2></button>
+  ${S.g&&!S.g.over?'<span class="pill" style="white-space:nowrap">🔒 Locked</span>':'<div class="row"><button class="btn small" data-all="1">All on</button><button class="btn ghost small" data-all="0">All off</button></div>'}</div>
+  ${S.ui.sp?'':sp.map(optHTML).join('')}`;
+}
+function bindOpts(root, rerender){
+  root.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{ S.ui=S.ui||{}; S.ui[b.dataset.col]=!S.ui[b.dataset.col]; save(); rerender(); });
+  root.querySelectorAll('.seg button[data-k]').forEach(b=>b.onclick=()=>{ if(b.dataset.k==='rounds'&&S.g&&!S.g.over) return; S.settings[b.dataset.k]=+b.dataset.c; save(); rerender(); });
+  root.querySelectorAll('[data-all]').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.all==='1';
+    RULES.filter(r=>!r.std).forEach(r=>S.settings[r.k]=v);
+    save(); rerender();
+  });
+  root.querySelectorAll('input[type=checkbox][data-k]').forEach(c=>c.onchange=()=>{S.settings[c.dataset.k]=c.checked;applyTheme();save();rerender();});
+  root.querySelectorAll('.stepper button').forEach(b=>b.onclick=()=>{
+    const r=GAME_OPTS.find(o=>o.k===b.dataset.k);
+    S.settings[r.k]=Math.min(r.max,Math.max(r.min,S.settings[r.k]+ +b.dataset.d*r.step));
+    save(); rerender();
+  });
+}
+$('addForm').onsubmit=e=>{e.preventDefault();const n=$('pname').value.trim();if(n&&S.names.length<12){S.names.push(n);$('pname').value='';save();renderSetup();}};
+$('startBtn').onclick=()=>{
+  if(S.names.length<2){flashSetup();return;}
+  const b=$('startBtn');
+  if(S.g && !S.g.over && !b.dataset.armed){ b.dataset.armed='1'; b.textContent='Tap again — this replaces the current game'; return; }
+  startGame();
+};
+$('darkBtn').onclick=()=>{ S.settings.dark=!S.settings.dark; save(); applyTheme(); };
+$('homeBtn').onclick=()=>{ armDbl=false; S.screen='setup'; save(); render(); window.scrollTo(0,0); };
+$('resumeBtn').onclick=()=>{S.screen='game';save();render();};
+function flashSetup(){ $('pname').focus(); $('pname').placeholder='Add at least 2 players first'; }
+
+/* ---------- game ---------- */
+function startGame(){
+  S.g={round:1,bank:0,rolls:0,banked:[],roller:0,starter:0,
+       scores:S.names.map(()=>0),log:[],over:false,pick:[],streak:0,lastSum:null,elim:[]};
+  S.hist=[]; S.screen='game'; save(); render();
+}
+function snap(){ S.hist.push(JSON.stringify(S.g)); if(S.hist.length>200) S.hist.shift(); }
+function n(){return S.names.length}
+function active(){return S.names.map((_,i)=>i).filter(i=>!S.g.banked.includes(i))}
+function nextRoller(from){
+  const a=active(); if(!a.length) return from;
+  const d=(S.g&&S.g.dir===-1)?-1:1;
+  for(let k=1;k<=n();k++){const i=((from+d*k)%n()+n())%n(); if(a.includes(i)) return i;}
+  return from;
+}
+function addLog(t){S.g.log.unshift(`R${S.g.round}: ${t}`); if(S.g.log.length>60) S.g.log.pop();}
+
+let lastMsg={text:'',cls:''};
+let armDbl=false;
+function pickTotal(t){
+  const dbl = armDbl || t===2 || t===12;   // 2 and 12 can only be doubles
+  armDbl=false;
+  let a,b;
+  if(dbl){ a=b=t/2; } else { a=Math.max(1,t-6); b=t-a; }
+  roll(a,b);
+}
+function roll(a,b){
+  // a=b=0 means "doubles" entered without a number (only after the safe rolls)
+  const g=S.g, st=S.settings; snap();
+  const blind = a===0 && b===0;
+  g.lastRoller = g.roller;
+  const sum=a+b, dbl=a===b; g.rolls++;
+  const safe = g.rolls<=safeN();
+  const who=S.names[g.roller];
+  let bonus='';
+  g.pRolls = g.pRolls || S.names.map(()=>0); g.p7 = g.p7 || S.names.map(()=>0);
+  g.pRolls[g.roller]++; if(sum===7) g.p7[g.roller]++;
+  g.primes = g.primes || S.names.map(()=>[]);
+  if(!blind && [3,5,7,11].includes(sum) && !g.primes[g.roller].includes(sum)) g.primes[g.roller].push(sum);
+  if(st.optimus && !g.primeDone && g.primes[g.roller].length===4){
+    g.primeDone=true; g.scores[g.roller]+=1000;
+    ev('prime','Optimus Prime!',`${who} rolled every prime · +1,000 to their score`);
+    addLog(`${who} rolled 3, 5, 7 and 11 → Optimus Prime +1000`);
+    bonus+=` 🚛 Optimus Prime — ${who} rolled every prime! +1,000 to their score.`;
+  }
+  { const P=stats().p[g.roller]; P.rolls++; if(sum===7) P.sevens++; if(dbl) P.dbl++; stats().totalRolls++; }
+  g.pDbl = g.pDbl || S.names.map(()=>0);
+  if(!safe) g.pDbl[g.roller] = dbl ? g.pDbl[g.roller]+1 : 0;   // safe rolls don't count
+  if(st.hatTrick && g.pDbl[g.roller]>=3){
+    g.pDbl[g.roller]=0; g.scores[g.roller]+=500;
+    ev('hattrick','Doubles hat trick!',`${who} · +500 to their score`);
+    addLog(`${who} rolled doubles 3 turns in a row → +500 to score`);
+    bonus+=` 🎩 Hat trick — +500 to ${who}’s score!`;
+  }
+  g.r7 = (g.rolls===1 ? 0 : (g.r7||0)) + (sum===7 ? 1 : 0);
+  const jackpot = st.jackpot7 && safeN()>=3 && g.rolls===3 && g.r7===3;
+  g.tHist = g.tHist || [];
+  let strBonus = 0;
+  if(st.straight){
+    if(blind){ g.tHist=[]; }
+    else {
+      const h=g.tHist; h.push(sum); if(h.length>4) h.shift();
+      const u=[...new Set(h)].sort((x,y)=>x-y);
+      if(h.length===4 && u.length===4 && u[3]-u[0]===3){
+        strBonus=1000; g.tHist=[];
+        ev('straight','Straight!',`${u.join('-')} · +1,000 to the bank`);
+        bonus=` 🎉 Team straight (${u.join('-')}) — +1,000 to the bank!`;
+        addLog(`${who} completed a team straight ${u.join('-')} → +1000 to bank`);
+      }
+    }
+  }
+  let msg='', bust=false, before=g.bank;
+  g.streak = g.streak||0;
+  const dblMult = ()=>{
+    if(!st.stackDoubles){ g.streak=1; return 2; }
+    g.streak++; return g.streak>=2 ? 4 : 2;   // capped at ×4
+  };
+  const dblMsg = m => { ev(m===2?'doubles':'stack', m===2?'Doubles!':'Stacked doubles!', `Bank ×${m}`); return m===2 ? 'Doubles! Bank doubled' : `Stacked doubles! Bank ×${m}`; };
+  let keepStreak=false;
+  const match = !blind && st.matchRoll && g.lastSum===sum;
+  const hhm = (st.happyHour && g.round===5) ? 2 : 1;
+  const ocean = st.ocean11 && g.round===11 && sum===11;
+  if(ocean){ ev('ocean','Ocean’s 11!','An 11 in round 11 · +1,100'); addLog(`${who} hit Ocean’s 11 → 1100`); }
+  const add = v => { v*=hhm; if(match){ ev('copycat','Copycat!',`${sum} again · +${v*2}`); g.bank+=v*2; return `Copycat ${sum}! +${v*2} (×2)`; } g.bank+=v; return `+${v}`; };
+  if(st.robinHood && sum===11){
+    let hi=0, lo=0;
+    const live=S.names.map((_,i)=>i).filter(i=>!(g.elim||[]).includes(i)); hi=lo=live[0];
+    live.forEach(i=>{ if(g.scores[i]>g.scores[hi]) hi=i; if(g.scores[i]<g.scores[lo]) lo=i; });
+    const amt=Math.min(100,g.scores[hi]);
+    if(hi!==lo && g.scores[hi]>g.scores[lo] && amt>0){
+      g.scores[hi]-=amt; g.scores[lo]+=amt;
+      ev('robin','Robin Hood!',`${amt} from ${S.names[hi]} to ${S.names[lo]}`);
+      bonus+=` 🏹 Robin Hood: ${amt} from ${S.names[hi]} to ${S.names[lo]}.`;
+      addLog(`Robin Hood: ${amt} from ${S.names[hi]} to ${S.names[lo]}`);
+    }
+  }
+  if(safe){
+    if(sum===7 && st.seven70){ msg = match ? add(70) : (ev('lucky7','Lucky 7!',`+${70*hhm} to the bank`), g.bank+=70*hhm, `Lucky 7! +${70*hhm}`); }
+    else { msg=(ocean?'Ocean’s 11! ':'')+add(ocean?1100:sum); }
+  } else {
+    if(sum===7){ bust=true; msg='7 — BUST!'; ev('bust','BUST!',`${who} rolled a 7`); }
+    else if(dbl && st.doublesDouble){ const m=dblMult(); g.bank*=m; msg=dblMsg(m); keepStreak=true; }
+    else { msg=(ocean?'Ocean’s 11! ':'')+add(ocean?1100:sum); }
+  }
+  if(!keepStreak) g.streak=0;
+  g.lastSum = blind ? null : sum;
+  if(jackpot){ g.bank=Math.max(7000,g.bank); msg='Triple Lucky 7s! Bank = 7,000'; FXQ=FXQ.filter(x=>!['lucky7','copycat'].includes(x.kind)); ev('jackpot','JACKPOT!','Three 7s · bank = 7,000'); }
+  if(strBonus && !bust) g.bank += strBonus;
+  if(strBonus && bust){ FXQ=FXQ.filter(x=>x.kind!=='straight'); bonus=bonus.replace(/ 🎉 Team straight[^!]*!/,''); }
+  { const T=stats(); T.biggestPot=Math.max(T.biggestPot, bust?before:g.bank); T.longest=Math.max(T.longest,g.rolls); }
+  addLog(`${who} rolled ${blind?'doubles':sum+(dbl?' (doubles)':'')} → ${msg}${bust?'':` (bank ${g.bank})`}`);
+  g.sixRun = (blind || sum!==6) ? 0 : (g.sixRun||0)+1;
+  g.eightRun = (blind || sum!==8) ? 0 : (g.eightRun||0)+1;
+  if(st.reverse && sum===3 && n()>2){
+    g.dir = (g.dir===-1) ? 1 : -1;
+    ev('reverse','Reverse!',`Play now goes ${g.dir===-1?'backwards':'forwards'}`);
+    addLog(`${who} rolled a 3 → Reverse (${g.dir===-1?'backwards':'forwards'})`);
+    bonus+=` 🔁 Reverse! Play now goes ${g.dir===-1?'backwards':'forwards'}.`;
+  }
+  if(st.pirate && g.eightRun>=3){
+    g.eightRun=0;
+    const others=S.names.map((_,i)=>i).filter(i=>i!==g.roller && !(g.elim||[]).includes(i));
+    let haul=0; const parts=[];
+    others.forEach(i=>{ const t=Math.floor(g.scores[i]*0.1); if(t>0){ g.scores[i]-=t; haul+=t; parts.push(`${S.names[i]} −${t.toLocaleString()}`); } });
+    g.scores[g.roller]+=haul;
+    ev('pirate','Pirate’s booty!',`${who} plunders ${haul.toLocaleString()} points`);
+    addLog(`8-8-8! ${who} steals 10% from everyone → +${haul}${parts.length?' ('+parts.join(', ')+')':''}`);
+    bonus+=` 🏴‍☠️ Pirate’s booty! ${who} steals ${haul.toLocaleString()} points${parts.length?' ('+parts.join(', ')+')':''}.`;
+  }
+  if(st.devil && !bust && g.sixRun>=3){
+    g.sixRun=0;
+    const victims=active().filter(i=>!(g.elim||[]).includes(i));
+    const lostTxt=victims.map(i=>{ const p=g.scores[i]; g.scores[i]=0; return `${S.names[i]} (−${p.toLocaleString()})`; });
+    ev('devil','The devil’s number!',victims.length?`666 · ${victims.map(i=>S.names[i]).join(', ')} lose everything`:'666 · round over');
+    addLog(`666! Unbanked players wiped: ${lostTxt.join(', ')||'none'}`);
+    lastMsg={text:`😈 6-6-6! The devil takes it all${victims.length?': '+lostTxt.join(', '):''}. Round over.`+bonus,cls:'danger'};
+    endRound(true);
+    save(); if(S.screen==='game') renderGame(); return;
+  }
+  if(bust){
+    const lost=active().map(i=>S.names[i]);
+    { const T=stats(); T.p[g.roller].busts++; active().forEach(i=>T.p[i].lost+=before); }
+    g.bustRun = (g.lastBuster===g.roller ? (g.bustRun||0) : 0) + 1; g.lastBuster = g.roller;
+    if(st.bustCurse && g.bustRun>=3){
+      const lostPts=g.scores[g.roller]; g.scores[g.roller]=0; g.bustRun=0; g.lastBuster=null;
+      ev('curse','Triple bust curse!',`${who} busted 3 rounds in a row · score → 0`);
+      addLog(`${who} busted three rounds in a row → score wiped (${lostPts})`);
+      bonus+=` 💀 Third bust in a row — ${who} loses all ${lostPts.toLocaleString()} points!`;
+    }
+    g.b7 = g.b7 || S.names.map(()=>0); g.b7[g.roller]++;
+    g.elim = g.elim || [];
+    let dqOver=false;
+    if(st.loserBaby && g.b7[g.roller]>=10 && !g.elim.includes(g.roller)){
+      const pts=g.scores[g.roller]; g.elim.push(g.roller); g.scores[g.roller]=0;
+      const rest=S.names.map((_,i)=>i).filter(i=>!g.elim.includes(i));
+      const share=rest.length?Math.floor(pts/rest.length):0;
+      rest.forEach(i=>g.scores[i]+=share);
+      ev('loser','I’m a loser, baby!',`${who} is disqualified · ${share.toLocaleString()} to each player`);
+      addLog(`${who} busted 10 times → DISQUALIFIED; ${pts} split (${share} each)`);
+      bonus+=` 🗑️ That’s ${who}’s 10th bust — disqualified! ${share.toLocaleString()} points to each remaining player.`;
+      dqOver = rest.length<=1;
+    }
+    lastMsg={text:`${msg} ${lost.length?lost.join(', ')+' lose'+(lost.length===1?'s':'')+' '+before:''}`+bonus,cls:'danger'};
+    if(dqOver){ gameOver(); return; }
+    endRound(true);
+  } else {
+    lastMsg={text:msg+bonus,cls: (msg.startsWith('+')&&!bonus)?'':'good'};
+    g.roller=nextRoller(g.roller);
+  }
+  save(); if(S.screen==='game') renderGame(!bust);
+}
+function bankPlayer(i){
+  const g=S.g, st=S.settings;
+  if(g.banked.includes(i)) return;
+  if(g.bank<=0){ lastMsg={text:'Nothing in the bank yet',cls:'danger'}; renderGame(); return; }
+  snap();
+  const fin = st.finalDouble && g.round===st.rounds && !g.sd;
+  const amt = g.bank*(fin?2:1);
+  g.scores[i]+=amt; g.banked.push(i);
+  { const P=stats().p[i]; P.banks++; P.bankSum+=amt; P.big=Math.max(P.big,amt); }
+  addLog(`${S.names[i]} banked ${amt}${fin?' (final round ×2)':''}`);
+  if(fin) ev('final','Frenzy bank!',`${S.names[i]} banks ${amt.toLocaleString()}`,i); else tone([[1319,.05],[1760,.14]],0);
+  lastMsg={text:`${S.names[i]} banked ${amt.toLocaleString()}${fin?' (×2 final round)':''}!`,cls:'good'};
+  if(!g.firstBankDone){
+    g.firstBankDone=true;
+    g.fb = g.fb || S.names.map(()=>0); g.fb[i]++;
+    if(st.pennyPincher && g.fb[i]>=5){
+      g.fb[i]=0;
+      const pts=Math.max(0,g.scores[i]-1);
+      const rest=S.names.map((_,k)=>k).filter(k=>k!==i && !(g.elim||[]).includes(k));
+      const share=rest.length?Math.floor(pts/rest.length):0;
+      if(rest.length){ g.scores[i]=1; rest.forEach(k=>g.scores[k]+=share); }
+      ev('penny','Penny pincher!',`${S.names[i]} banked first 5 times · ${share.toLocaleString()} to each player`,i);
+      addLog(`${S.names[i]} was first to bank 5 times → Penny pincher: ${pts} split (${share} each), left with 1`);
+      lastMsg={text:`🪙 Penny pincher! ${S.names[i]} banked first for the 5th time — their points go to everyone else (${share.toLocaleString()} each) and they keep 1.`,cls:'danger'};
+    }
+  }
+  if(active().length===0){ lastMsg.text+=' Everyone’s in — round over.'; g.bustRun=0; g.lastBuster=null; endRound(); }
+  else if(g.roller===i){ g.roller=nextRoller(i); }
+  save(); renderGame();
+}
+function safeN(){ const st=S.settings; return (st.lucky7Round && S.g && S.g.round===7) ? Math.max(5,st.safe) : st.safe; }
+function endRound(afterBust){
+  const g=S.g;
+  if(g.round>=S.settings.rounds){ gameOver(); return; }
+  g.round++; g.bank=0; g.rolls=0; g.firstBankDone=false; g.sixRun=0; g.eightRun=0; g.banked=[...(g.elim||[])]; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
+  // the dice always pass to the seat after whoever rolled last,
+  // whether the round ended in a bust or with everyone banking
+  const last = (g.lastRoller!==undefined) ? g.lastRoller : g.roller;
+  g.roller=((last+((g.dir===-1)?-1:1))%n()+n())%n();
+  if(g.banked.includes(g.roller)) g.roller=nextRoller(g.roller);
+  if(S.settings.happyHour && g.round===5) ev('happy','Happy hour!','Round 5 — every roll counts double',-1);
+  if(S.settings.lucky7Round && g.round===7) ev('lucky7r','Lucky 7 round!',`Round 7 — the first ${Math.max(5,S.settings.safe)} rolls are safe`,-1);
+  if(S.settings.ocean11 && g.round===11) ev('ocean','Ocean’s 11!','Round 11 — an 11 is worth 1,100',-1);
+  if(S.settings.finalDouble && g.round===S.settings.rounds) ev('final','Final round!','Banking pays ×2 — make it count',-1);
+}
+function gameOver(){
+  const g=S.g;
+  if(!g.no7Done){
+    g.no7Done=true;
+    if(S.settings.no7Bonus && g.pRolls){
+      S.names.forEach((nm,i)=>{ if(g.pRolls[i]>0 && !g.p7[i]){ g.scores[i]+=777; addLog(`${nm} never rolled a 7 → +777`); ev('no7','Seven-free bonus!',`${nm} never rolled a 7 · +777`,i); } });
+    }
+  }
+  if(S.settings.suddenDeath && n()-(g.elim||[]).length>=2){
+    const order=S.names.map((_,i)=>i).filter(i=>!(g.elim||[]).includes(i)).sort((a,b)=>g.scores[b]-g.scores[a]);
+    const [p1,p2]=order, gap=g.scores[p1]-g.scores[p2];
+    const trigger = g.sd ? gap===0 : gap<=100;   // first time: within 100; after a bonus round: only an exact tie
+    if(trigger){
+      g.firstBankDone=false; g.sixRun=0; g.eightRun=0; g.sd=true; g.sdPlayers=[p1,p2]; g.sdCount=(g.sdCount||0)+1;
+      g.bank=0; g.rolls=0; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
+      g.banked=S.names.map((_,i)=>i).filter(i=>i!==p1&&i!==p2);
+      const last=(g.lastRoller!==undefined)?g.lastRoller:g.roller;
+      g.roller=((last+((g.dir===-1)?-1:1))%n()+n())%n(); if(g.banked.includes(g.roller)) g.roller=nextRoller(g.roller);
+      ev('sudden', g.sdCount>1?'Still tied — sudden death again!':'Sudden death!', `${S.names[p1]} vs ${S.names[p2]} · ${gap?gap+' points apart':'tied'} · one bonus round`, -1);
+      addLog(`Sudden death: ${S.names[p1]} vs ${S.names[p2]} (${gap} apart)`);
+      lastMsg={text:`⚔️ Sudden death! ${S.names[p1]} and ${S.names[p2]} play one bonus round.`,cls:'danger'};
+      S.screen='game'; save(); render(); return;
+    }
+  }
+  g.over=true; S.screen='end'; save(); render();
+}
+$('undoBtn').onclick=()=>{
+  if(armDbl){armDbl=false;renderGame();return;}
+  if(!S.hist.length) return;
+  S.g=JSON.parse(S.hist.pop()); S.g.pick=[]; lastMsg={text:'Undone',cls:''}; S.screen='game'; save(); render();
+};
+
+const PIPS={1:[[50,50]],2:[[28,28],[72,72]],3:[[28,28],[50,50],[72,72]],4:[[28,28],[72,28],[28,72],[72,72]],
+ 5:[[28,28],[72,28],[50,50],[28,72],[72,72]],6:[[28,25],[72,25],[28,50],[72,50],[28,75],[72,75]]};
+function dieSVG(v,color='#14213d'){return `<svg viewBox="0 0 100 100">${PIPS[v].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="${color}"/>`).join('')}</svg>`}
+
+function renderGame(pop){
+  const g=S.g, st=S.settings;
+  $('roundPill').textContent=(g.sd?'⚔️ Sudden death':`Round ${g.round}/${st.rounds}`)+(st.finalDouble&&g.round===st.rounds&&!g.sd?' · banks ×2':'')+(st.happyHour&&g.round===5?' · 🎉 Happy hour':'')+(st.lucky7Round&&g.round===7?' · 🌈 Lucky 7 round':'')+(st.ocean11&&g.round===11?' · 🌊 Ocean’s 11':'');
+  const inSafe=g.rolls<safeN();
+  const pp=$('phasePill');
+  pp.textContent = inSafe ? `Safe roll ${g.rolls+1}/${safeN()}` : '7 busts!';
+  pp.className='pill '+(inSafe?'safe':'danger');
+  $('bankAmt').textContent=g.bank.toLocaleString();
+  if(pop){const el=$('bankAmt');el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
+  const m=$('msg'); m.textContent=lastMsg.text; m.style.color = lastMsg.cls==='danger'?'var(--warn)':lastMsg.cls==='good'?'var(--accent2)':'var(--ink)';
+  $('roller').innerHTML=`<b>${esc(S.names[g.roller])}</b> is rolling`+(st.reverse&&g.dir===-1?' · <span style="color:#9334e6;font-weight:700">🔁 reversed</span>':'')
+    + (st.stackDoubles && g.streak>0 ? ` · <span style="color:var(--accent2);font-weight:700">Doubles now = ×4</span>` : '')
+    + (st.matchRoll && g.lastSum ? `<br>Last roll: ${g.lastSum} · match it for ×2` : '')
+    + (st.pirate && g.eightRun===2 ? `<br><span style="color:#b06000;font-weight:700">🏴‍☠️ Two 8s in a row — one more and the pirate strikes</span>` : '')
+    + (st.devil && g.sixRun===2 ? `<br><span style="color:var(--warn);font-weight:700">😈 Two 6s in a row — one more and the devil strikes</span>` : '')
+    + (st.straight && g.tHist && g.tHist.length ? `<br>Straight watch: ${g.tHist.join(' · ')}` : '');
+  armDbl=false;
+  const oneTapDbl = !inSafe && st.doublesDouble;
+  $('dice').innerHTML=[2,3,4,5,6,7,8,9,10,11,12].map(v=>`<button class="num ${v===7?'seven'+(inSafe?' safe7':''):''}" data-v="${v}" ${armDbl&&v%2?'disabled':''}>${v}</button>`).join('')
+    + `<button class="dblbtn" id="dblBtn" ${oneTapDbl?'':'disabled style="opacity:.3"'}>Doubles ×2</button>`;
+  $('dice').querySelectorAll('.num').forEach(d=>d.onclick=()=>pickTotal(+d.dataset.v));
+  $('dblBtn').onclick=()=>{ if(oneTapDbl) roll(0,0); };
+  $('picked').textContent = (st.happyHour&&g.round===5) ? '🎉 Happy hour: every roll counts double this round' : (st.lucky7Round&&g.round===7) ? `🌈 Lucky 7 round: the first ${safeN()} rolls are safe` : (st.ocean11&&g.round===11) ? '🌊 Ocean’s 11: an 11 is worth 1,100 this round' : oneTapDbl ? 'Tap the total, or just tap Doubles'
+    : inSafe ? 'Safe roll: tap the total (doubles just count face value)' : 'Tap the total';
+  const order=S.names.map((_,i)=>i);
+  const top=Math.max(...g.scores);
+  const behind=i=> top<=0 ? '' : g.scores[i]===top ? '<div class="bh lead">👑 Leader</div>' : `<div class="bh">${(top-g.scores[i]).toLocaleString()} behind</div>`;
+  $('pcards').innerHTML=order.map(i=>{
+    const b=g.banked.includes(i);
+    return `<button class="pcard ${b?'banked':''} ${i===g.roller&&!b?'turn':''}" data-i="${i}">
+      <div class="n"><span>${esc(S.names[i])}</span>${i===g.roller&&!b?'🎲':''}</div>
+      <div class="s">${g.scores[i].toLocaleString()}</div>${behind(i)}
+      <div class="a">${(g.elim||[]).includes(i)?'🗑️ Disqualified':g.sd&&g.sdPlayers&&!g.sdPlayers.includes(i)?'Sitting out':b?'Banked ✓':'Tap to BANK'}${st.loserBaby&&g.b7&&g.b7[i]&&!(g.elim||[]).includes(i)?` · busts ${g.b7[i]}/10`:''}${st.pennyPincher&&g.fb&&g.fb[i]&&!(g.elim||[]).includes(i)?` · 🪙 ${g.fb[i]}/5`:''}${st.optimus&&!g.primeDone&&g.primes&&g.primes[i].length&&!(g.elim||[]).includes(i)?` · 🚛 ${g.primes[i].length}/4`:''}${st.hatTrick&&g.pDbl&&g.pDbl[i]?` · 🎩 ${g.pDbl[i]}/3`:''}${st.bustCurse&&g.lastBuster===i&&g.bustRun>0&&!(g.elim||[]).includes(i)?` · ⚠️ ${g.bustRun} bust${g.bustRun>1?'s':''} in a row`:''}${st.no7Bonus&&g.pRolls&&g.pRolls[i]&&!g.p7[i]?' · 🎰 no 7s':''}</div></button>`;
+  }).join('');
+  $('pcards').querySelectorAll('.pcard').forEach(c=>c.onclick=()=>bankPlayer(+c.dataset.i));
+  $('log').innerHTML=g.log.map(l=>`<div>${esc(l)}</div>`).join('');
+  flushFX();
+}
+
+/* ---------- effects ---------- */
+const FXDEF={
+  lucky7:  {e:'🍀',c:'#0f9d58',tone:[[784,.08],[1047,.2]]},
+  doubles: {e:'🎲',c:'#1a73e8',tone:[[523,.08],[659,.08],[784,.18]]},
+  stack:   {e:'🔥',c:'#e8710a',tone:[[523,.06],[659,.06],[784,.06],[1047,.06],[1319,.26]]},
+  copycat: {e:'🐱',c:'#d01884',tone:[[988,.07],[0,.05],[988,.07],[0,.05],[1319,.16]]},
+  straight:{e:'💰',c:'#f4b400',tone:[[523,.09],[587,.09],[659,.09],[698,.09],[784,.09],[1047,.35]]},
+  robin:   {e:'🏹',c:'#188038',tone:[[330,.06,'triangle'],[660,.06,'triangle'],[1320,.3,'triangle']]},
+  wipe:    {e:'🐍',c:'#d93025',tone:[[600,.14,'sawtooth'],[400,.14,'sawtooth'],[200,.14,'sawtooth'],[100,.4,'sawtooth']]},
+  out:     {e:'🚫',c:'#d93025',tone:[[220,.12,'square'],[0,.06],[220,.12,'square'],[0,.06],[110,.45,'square']]},
+  bust:    {e:'💥',c:'#d93025',vol:.6,tone:[[311,.16,'square'],[233,.4,'square']]},
+  jackpot: {e:'7️⃣',c:'#f4b400',tone:[[523,.07],[659,.07],[784,.07],[1047,.07],[784,.07],[1047,.07],[1319,.07],[1568,.5]]},
+  no7:     {e:'🎰',c:'#0f9d58',tone:[[784,.1],[784,.1],[784,.1],[0,.08],[1047,.12],[1319,.4]]},
+  curse:   {e:'💀',c:'#d93025',tone:[[392,.2,'sawtooth'],[370,.2,'sawtooth'],[349,.2,'sawtooth'],[330,.6,'sawtooth']]},
+  hattrick:{e:'🎩',c:'#1a73e8',tone:[[659,.08],[784,.08],[988,.08],[0,.05],[659,.08],[784,.08],[988,.08],[1319,.35]]},
+  happy:   {e:'🎉',c:'#d01884',tone:[[523,.08],[659,.08],[784,.08],[659,.08],[784,.08],[1047,.3]]},
+  lucky7r: {e:'🌈',c:'#0f9d58',tone:[[659,.1,'triangle'],[784,.1,'triangle'],[988,.1,'triangle'],[1319,.35,'triangle']]},
+  ocean:   {e:'🌊',c:'#1a73e8',tone:[[880,.06],[988,.06],[1109,.06],[1319,.06],[1109,.06],[1319,.06],[1760,.35]]},
+  sudden:  {e:'⚔️',c:'#d93025',tone:[[220,.18,'square'],[0,.06],[220,.18,'square'],[0,.06],[330,.18,'square'],[440,.45,'square']]},
+  loser:   {e:'🗑️',c:'#5f6368',tone:[[196,.2,'square'],[0,.08],[185,.2,'square'],[0,.08],[175,.2,'square'],[0,.08],[147,.8,'square']],vol:.7},
+  penny:   {e:'🪙',c:'#b07d00',tone:[[1568,.05],[0,.04],[1568,.05],[0,.04],[1568,.05],[0,.1],[523,.15,'triangle'],[392,.4,'triangle']]},
+  devil:   {e:'😈',c:'#a50e0e',tone:[[147,.3,'sawtooth'],[156,.3,'sawtooth'],[147,.3,'sawtooth'],[110,.9,'sawtooth']],vol:.8},
+  prime:   {e:'🚛',c:'#1a4fa0',tone:[[392,.1,'square'],[392,.1,'square'],[523,.12,'square'],[0,.05],[659,.1,'square'],[784,.45,'square']],vol:.8},
+  pirate:  {e:'🏴‍☠️',c:'#3c4043',tone:[[294,.12,'triangle'],[392,.12,'triangle'],[494,.12,'triangle'],[587,.12,'triangle'],[0,.05],[494,.1,'triangle'],[587,.45,'triangle']]},
+  reverse: {e:'🔁',c:'#9334e6',tone:[[880,.07],[784,.07],[659,.07],[523,.07],[0,.04],[523,.07],[659,.07],[784,.07],[880,.2]]},
+  final:   {e:'🏁',c:'#f4b400',tone:[[392,.12],[523,.12],[659,.12],[784,.12],[0,.06],[659,.1],[784,.4]]},
+};
+let FXQ=[];
+function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
+const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
+  robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',prime:'🚛 Optimus Prime',no7:'🎰 Seven-free bonuses'};
+function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
+function recordFX(){
+  if(!S.g) return; const st=stats();
+  FXQ.forEach(x=>{ if(x.rec||x.who===-1||x.kind==='bust') return; x.rec=true;
+    const r=st.rules[x.kind]=st.rules[x.kind]||{n:0,by:{}}; r.n++; if(x.who>=0) r.by[x.who]=(r.by[x.who]||0)+1; });
+}
+// Sounds are rendered to a WAV and played through an <audio> element. iPhones mute
+// Web Audio when the ring/silent switch is on, but <audio> playback still plays.
+const SR=22050; let sndEl=null;
+function synth(seq,vol=1){
+  const len=Math.ceil(seq.reduce((t,[,d])=>t+d,0)*SR)+1, out=new Float32Array(len);
+  let pos=0;
+  seq.forEach(([f,d,type])=>{
+    const n=Math.floor(d*SR);
+    if(f){ for(let i=0;i<n;i++){
+      const ph=(i*f/SR)%1;
+      let v = type==='square' ? (ph<.5?1:-1)*.6
+            : type==='sawtooth' ? (2*ph-1)*.6
+            : type==='triangle' ? 1-4*Math.abs(ph-.5)
+            : Math.sin(2*Math.PI*ph);
+      const env=Math.min(1,i/(SR*.008))*Math.min(1,(n-i)/(SR*.03));
+      out[pos+i]+=v*env*.45*vol;
+    }}
+    pos+=n;
+  });
+  return out;
+}
+function playSeqs(parts){ // parts: [[seq, startSeconds], ...] mixed into one clip
+  if(!S.settings.sound || !parts.length) return;
+  try{
+    const clips=parts.map(([q,t,vol])=>[synth(q,vol),Math.floor(t*SR)]);
+    const total=Math.max(...clips.map(([c,o])=>c.length+o));
+    const mix=new Float32Array(total);
+    clips.forEach(([c,o])=>{ for(let i=0;i<c.length;i++) mix[o+i]+=c[i]; });
+    const buf=new ArrayBuffer(44+total*2), v=new DataView(buf);
+    const w=(o,str)=>{ for(let i=0;i<str.length;i++) v.setUint8(o+i,str.charCodeAt(i)); };
+    w(0,'RIFF'); v.setUint32(4,36+total*2,true); w(8,'WAVE'); w(12,'fmt ');
+    v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+    v.setUint32(24,SR,true); v.setUint32(28,SR*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+    w(36,'data'); v.setUint32(40,total*2,true);
+    for(let i=0;i<total;i++){ const x=Math.max(-1,Math.min(1,mix[i])); v.setInt16(44+i*2,x*32767,true); }
+    const url=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+    if(!sndEl){ sndEl=new Audio(); sndEl.setAttribute('playsinline',''); }
+    if(sndEl.dataset.url) URL.revokeObjectURL(sndEl.dataset.url);
+    sndEl.dataset.url=url; sndEl.src=url; sndEl.volume=1;
+    const pr=sndEl.play(); if(pr&&pr.catch) pr.catch(()=>{});
+  }catch(e){}
+}
+function tone(seq,start){ playSeqs([[seq,start||0]]); }
+const FX_MS=1500;
+function flushFX(){
+  recordFX();
+  if(!FXQ.length) return;
+  const q=FXQ; FXQ=[];
+  playSeqs(q.map((x,k)=>[FXDEF[x.kind].tone, k*FX_MS/1000, FXDEF[x.kind].vol||1])); // one clip, started inside the tap
+  q.forEach((x,k)=>setTimeout(()=>showFX(x), k*FX_MS));
+}
+function showFX(x){
+  const d=FXDEF[x.kind], el=$('fx');
+  el.style.setProperty('--c',d.c);
+  $('fxE').textContent=d.e; $('fxT').textContent=x.title; $('fxU').textContent=x.sub||'';
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  if(['bust','wipe','out'].includes(x.kind)){ document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); }
+  try{ if(navigator.vibrate) navigator.vibrate(x.kind==='bust'||x.kind==='out'?[80,40,80]:30); }catch(e){}
+  clearTimeout(showFX.t); showFX.t=setTimeout(()=>el.classList.remove('show'), FX_MS-150);
+}
+$('fx').onclick=()=>$('fx').classList.remove('show');
+
+function testSounds(){
+  const was=S.settings.sound; S.settings.sound=true;
+  [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['prime','Optimus Prime!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['lucky7r','Lucky 7 round!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   .forEach(([k,t])=>ev(k,t,'Sound test',-1));
+  flushFX(); S.settings.sound=was;
+}
+
+function showHelp(){
+  const st=S.settings, sp=RULES.filter(r=>!r.std);
+  const on=sp.filter(r=>st[r.k]), off=sp.filter(r=>!st[r.k]);
+  const li=r=>`<li><b>${ttl(r)}</b> — ${r.d}</li>`;
+  openSheet(`<div class="help">
+    <div class="top"><h2 style="margin:0">How to play</h2><button class="btn ghost small" id="closeH">Done</button></div>
+    <h3>🎯 The goal</h3>
+    <p>Have the most points after ${st.rounds} rounds. Everyone shares one bank each round, and the trick is knowing when to take it.</p>
+    <h3>🎲 A round</h3>
+    <ul>
+      <li>Players take turns rolling two dice. Every roll adds to the shared <b>bank</b>.</li>
+      <li>The first <b>${st.safe} rolls are safe</b>: a 7 can’t hurt you${st.seven70?' — it adds 70 instead':''}.</li>
+      <li>After the safe rolls, <b>a 7 busts the round</b>: anyone who hasn’t banked gets nothing.</li>
+      ${st.doublesDouble?'<li>After the safe rolls, <b>doubles double the bank</b>.</li>':''}
+      <li>Any time between rolls, a player can <b>bank</b>: take the current bank as points and sit out the rest of the round.</li>
+      <li>The round ends on a bust or when everyone has banked. After a bust, the next player in line starts the next round.</li>
+    </ul>
+    <h3>📱 Using the app</h3>
+    <ul>
+      <li>Roll real dice, then tap the <b>total</b>. After the safe rolls you can just tap <b>Doubles ×2</b> for any doubles.</li>
+      <li>To bank, tap the player’s card.</li>
+      <li><b>↶ Undo</b> reverses the last roll or bank. <b>🏠</b> pauses the game; Resume brings you back.</li>
+      <li>Settings lock once the game starts, so agree on rules first.</li>
+    </ul>
+    <h3>✨ Special rules in play (${on.length})</h3>
+    ${on.length?`<ul>${on.map(li).join('')}</ul>`:'<p>None — classic Bank.</p>'}
+    ${off.length?`<h3 class="off">Turned off</h3><ul class="off">${off.map(li).join('')}</ul>`:''}
+    
+  </div>`, ()=>{ $('closeH').onclick=()=>{ closeSheet(); try{ if(location.hash) history.replaceState(null,'',location.pathname+location.search); }catch(e){} }; });
+}
+// open the guide in place, without navigating (embeds like Google Sites can send '#' links to the parent page)
+
+function checkHash(){ if(location.hash==='#how-to-play') showHelp(); }
+window.addEventListener('hashchange',checkHash);
+
+/* ---------- sheets ---------- */
+function openSheet(html,bind){ $('sheet').innerHTML=html; $('overlay').classList.remove('hidden'); bind&&bind(); }
+function closeSheet(){ $('overlay').classList.add('hidden'); }
+$('overlay').onclick=e=>{ if(e.target.id==='overlay') closeSheet(); };
+$('menuBtn').onclick=showMenu;
+function showMenu(){
+  openSheet(`<div class="top"><h2 style="margin:0">Settings</h2><button class="btn ghost small" id="closeS">Done</button></div>
+    ${GAME_OPTS.map(optHTML).join('')}${rulesHTML()}
+    <div class="bar"><button class="btn ghost" id="helpBtn">📖 How to play</button><button class="btn ghost" id="testSnd">🔊 Test sounds</button></div>
+    <div class="bar"><button class="btn ghost" id="quitBtn" style="color:var(--warn)">End game & go to setup</button></div>`,
+    ()=>{ bindOpts($('sheet'), showMenu); $('closeS').onclick=()=>{closeSheet();renderGame();};
+      $('testSnd').onclick=()=>{ closeSheet(); testSounds(); };
+      $('helpBtn').onclick=()=>showHelp();
+      $('quitBtn').onclick=()=>{ $('quitBtn').textContent='Tap again to confirm'; $('quitBtn').onclick=()=>{S.screen='setup';S.g=null;save();closeSheet();render();}; }; });
+}
+$('scoresBtn').onclick=()=>openSheet(`<div class="top"><h2 style="margin:0">Standings</h2><button class="btn ghost small" id="closeS">Done</button></div><table>${standings()}</table>`,
+  ()=>$('closeS').onclick=closeSheet);
+function standings(){
+  const el=S.g.elim||[];
+  return S.names.map((nm,i)=>({nm,s:S.g.scores[i],x:el.includes(i)})).sort((a,b)=>(a.x-b.x)||(b.s-a.s))
+    .map((p,k,arr)=>p.x?`<tr style="opacity:.5"><td>🗑️ ${esc(p.nm)} <span style="font-size:13px">(disqualified)</span></td><td>DQ</td></tr>`:`<tr><td>${k+1}. ${esc(p.nm)}${k&&arr[0].s>p.s?` <span style="color:var(--warn);font-size:13px">(${(arr[0].s-p.s).toLocaleString()} behind)</span>`:''}</td><td>${p.s.toLocaleString()}</td></tr>`).join('');
+}
+
+/* ---------- end ---------- */
+const PLAY_URL='https://www.adamdibble.com/home/bank-it-big-time';
+function buildSummary(){
+  recordFX();
+  const g=S.g, T=stats(), N=S.names, fmt=x=>Math.round(x).toLocaleString();
+  const top=(f,minv=1)=>{ const v=N.map((_,i)=>f(i)); const m=Math.max(...v); if(!(m>=minv)) return null; return {who:N.filter((_,i)=>v[i]===m).join(' & '),v:m}; };
+  const low=(f,ok)=>{ const ids=N.map((_,i)=>i).filter(ok); if(ids.length<2) return null; const m=Math.min(...ids.map(f)); return {who:ids.filter(i=>f(i)===m).map(i=>N[i]).join(' & '),v:m}; };
+  const avg=i=>T.p[i].banks?T.p[i].bankSum/T.p[i].banks:0;
+  const awards=[];
+  let a;
+  if(a=top(i=>T.p[i].big)) awards.push(`🏦 Biggest bank: ${a.who} (${fmt(a.v)})`);
+  const dare=top(i=>avg(i));
+  if(dare) awards.push(`🤑 Daredevil: ${dare.who} (avg bank ${fmt(dare.v)})`);
+  const safe=low(avg,i=>T.p[i].banks>0); if(safe && safe.who!==(dare&&dare.who)) awards.push(`🐔 Played it safe: ${safe.who} (avg bank ${fmt(safe.v)})`);
+  if(a=top(i=>T.p[i].banks)) awards.push(`🎯 Most banks: ${a.who} (${a.v})`);
+  if(a=top(i=>T.p[i].dbl)) awards.push(`🎲 Doubles machine: ${a.who} (${a.v} doubles)`);
+  if(a=top(i=>T.p[i].sevens)) awards.push(`7️⃣ Seven magnet: ${a.who} (${a.v} sevens)`);
+  if(a=top(i=>T.p[i].busts)) awards.push(`💥 Round wrecker: ${a.who} (${a.v} busts)`);
+  if(a=top(i=>T.p[i].lost)) awards.push(`😭 Heartbreak: ${a.who} (${fmt(a.v)} lost to busts)`);
+  const highlights=Object.entries(T.rules).sort((x,y)=>y[1].n-x[1].n).map(([k,r])=>{
+    const by=Object.entries(r.by).sort((x,y)=>y[1]-x[1]).map(([i,c])=>`${N[i]}${c>1?' ×'+c:''}`).join(', ');
+    return `${RULE_LABEL[k]||k}: ${r.n}${by?` (${by})`:''}`; });
+  const facts=[`${g.round} rounds${g.sd?` + ${g.sdCount} sudden-death round${g.sdCount>1?'s':''}`:''}, ${T.totalRolls} rolls`, `Biggest pot: ${fmt(T.biggestPot)}`, `Longest round: ${T.longest} rolls`];
+  const el=g.elim||[];
+  const order=N.map((nm,i)=>({nm,s:g.scores[i],x:el.includes(i)})).sort((x,y)=>(x.x-y.x)||(y.s-x.s));
+  const text=[`🎲 Bank It! Big Time! — game recap`,
+    `🏆 ${$('winner').textContent} (${fmt(order[0].s)})`, '',
+    ...order.map((p,k)=>p.x?`🗑️ ${p.nm} — disqualified (10 busts)`:`${k+1}. ${p.nm} — ${fmt(p.s)}${k?` (${fmt(order[0].s-p.s)} behind)`:''}`), '',
+    'AWARDS', ...awards, '',
+    'FUN FACTS', ...facts, '', `Play it: ${PLAY_URL}`].join('\n');
+  return {awards,highlights,facts,text};
+}
+function renderEnd(){
+  const el=S.g.elim||[], live=S.names.map((_,i)=>i).filter(i=>!el.includes(i));
+  const max=Math.max(...live.map(i=>S.g.scores[i]));
+  const w=live.filter(i=>S.g.scores[i]===max).map(i=>S.names[i]);
+  $('winner').textContent = w.length>1 ? `Tie: ${w.join(' & ')}` : `${w[0]} wins!`;
+  $('finalTable').innerHTML=standings();
+  const sm=buildSummary();
+  const card=(h,arr)=>arr.length?`<div class="sumcard"><h3>${h}</h3>${arr.map(x=>`<div>${esc(x)}</div>`).join('')}</div>`:'';
+  $('summary').innerHTML=card('Awards',sm.awards)+card('Fun facts',sm.facts);
+  $('sumText').value=sm.text; $('sumText').classList.add('hidden');
+  $('smsSum').href='sms:?&body='+encodeURIComponent(sm.text);
+  $('copySum').textContent='📋 Copy recap';
+  flushFX();
+}
+$('copySum').onclick=async()=>{
+  try{ await navigator.clipboard.writeText($('sumText').value); $('copySum').textContent='✓ Copied — paste into a text'; }
+  catch(e){ $('sumText').classList.remove('hidden'); $('sumText').select(); $('copySum').textContent='Select all & copy below'; }
+};
+$('againBtn').onclick=startGame;
+$('newBtn').onclick=()=>{ S.screen='setup'; S.g=null; S.ui=Object.assign(S.ui||{}, {sp:false}); save(); render(); try{window.scrollTo(0,0);}catch(e){} };
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function applyTheme(){ document.body.classList.toggle('dark', !!S.settings.dark); const b=$('darkBtn'); if(b) b.textContent=S.settings.dark?'☀️':'🌙'; }
+function render(){
+  applyTheme();
+  ['setup','game','end'].forEach(id=>$(id).classList.toggle('hidden',S.screen!==id));
+  if(S.screen==='setup') renderSetup();
+  if(S.screen==='game'){ if(!S.g){S.screen='setup';return render();} renderGame(); }
+  if(S.screen==='end') renderEnd();
+}
+render();
+checkHash();
+</script>
+</body>
+</html>
