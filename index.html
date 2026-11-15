@@ -43,6 +43,12 @@ input[type=text]{flex:1;font:inherit;font-size:16px;padding:12px;border:1px soli
 .switch input:checked+.slider:before{transform:translateX(20px)}
 .colhead{background:none;padding:0;margin:22px 0 8px;text-align:left;color:inherit;border-radius:0;display:block}
 .top .colhead{margin:0}
+.grp{margin-left:6px;padding-left:8px;border-left:2px solid var(--line);margin-top:10px}
+.colhead.sub{flex:1;min-width:0}
+.colhead.sub h2{font-size:13px;color:var(--ink);white-space:normal;line-height:1.3}
+.grp .top{gap:6px}
+.grp .top .row{flex:none}
+.grp [data-grp]{padding:6px 10px;font-size:13px}
 .colhead h2{white-space:nowrap;font-size:15px}
 [data-all]{white-space:nowrap}
 .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
@@ -133,7 +139,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 3.6</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 3.7</p>
 </section>
 
 <!-- GAME -->
@@ -201,7 +207,7 @@ const RULES = [
   {k:'optimus', t:'Optimus Prime', d:'The first player to roll a 3, a 5 and an 11 (every odd prime except 7) within a single round gets +1,000 straight to their score, not the bank. Your progress resets every round, and only one player can win it per game.', type:'bool', def:true},
   {k:'pirate', t:'Pirate’s booty', d:'If three non-double 8s are rolled in a row in a round (by anyone), whoever rolled the third one steals 10% of every other player’s score. Just tap 8; a Doubles roll breaks the streak.', type:'bool', def:true},
   {k:'reverse', t:'Reverse', d:'Rolling a 3 flips the direction of play, like an UNO reverse card. It stays that way until someone rolls another 3. Best with 3 or more players.', type:'bool', def:true},
-  {k:'tresLeches', t:'Tres leches', d:'If three 3s are rolled in a row in a round (by anyone), whoever rolled the third one has their score revalued as if it were Mexican pesos instead of US dollars, at the current exchange rate. Their score shrinks to roughly 1/17th.', type:'bool', def:true},
+  {k:'tresLeches', t:'Tres leches', d:'If three 3s are rolled in a row in a round (by anyone), whoever rolled the third one has their score revalued as if it were Mexican pesos instead of US dollars, at the current exchange rate. Their score shrinks to about 1/18th.', type:'bool', def:true},
   {k:'sevenEleven', t:'7-Eleven', d:'A 7 during the safe rolls followed right away by an 11 (any players) adds 711 to the bank.', type:'bool', def:true},
   {k:'blackjack', t:'Blackjack', d:'Two back-to-back rolls in a round that add up to 21 (10 + 11 or 9 + 12, in either order) give whoever rolled the second one +210 to their score.', type:'bool', def:true},
   {k:'nineToFive', t:'9 to 5', d:'A 9 followed right away by a 5 gives everyone who hasn’t banked yet +95 to their score.', type:'bool', def:true},
@@ -272,19 +278,42 @@ function optHTML(r){
     : `<div class="stepper"><button data-k="${r.k}" data-d="-1">−</button><span>${v}</span><button data-k="${r.k}" data-d="1">+</button></div>`;
   return `<div class="rule"><div><div class="t">${ttl(r)}</div>${r.d?`<div class="d">${r.d}</div>`:''}</div>${ctl}</div>`;
 }
+const RULE_GROUPS=[
+  {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven']},
+  {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','optimus','blackjack','nineToFive','no7Bonus']},
+  {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches']},
+  {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate']},
+  {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','finalDouble','suddenDeath']},
+];
+function groupedSpecial(){ const sp=RULES.filter(r=>!r.std), used=new Set();
+  const out=RULE_GROUPS.map(gp=>{ const rs=gp.keys.map(k=>sp.find(r=>r.k===k)).filter(Boolean); rs.forEach(r=>used.add(r.k)); return {...gp,rules:rs}; });
+  const rest=sp.filter(r=>!used.has(r.k)); if(rest.length) out.push({id:'other',t:'✨ Other',rules:rest});
+  return out.filter(gp=>gp.rules.length); }
 function rulesHTML(){
   const sp=RULES.filter(r=>!r.std), on=sp.filter(r=>S.settings[r.k]).length;
   S.ui = S.ui || {std:true, sp:true};   // true = collapsed
   const std=RULES.filter(r=>r.std), stdOn=std.filter(r=>S.settings[r.k]).length;
+  const live=S.g&&!S.g.over;
   const arrow=c=>`<span style="display:inline-block;width:14px">${c?'▸':'▾'}</span>`;
-  return `<button class="colhead" data-col="std"><h2 style="margin:0">${arrow(S.ui.std)}Standard rules <span style="text-transform:none;letter-spacing:0">(${stdOn}/${std.length} on)</span></h2></button>
+  const cnt=(a,b)=>`<span style="text-transform:none;letter-spacing:0">(${a}/${b} on)</span>`;
+  const groups=groupedSpecial().map(gp=>{
+    const key='g_'+gp.id, closed=S.ui[key]!==false, gOn=gp.rules.filter(r=>S.settings[r.k]).length;
+    return `<div class="grp"><div class="top"><button class="colhead sub" data-col="${key}" data-default-closed="1"><h2 style="margin:0">${arrow(closed)}${gp.t} ${cnt(gOn,gp.rules.length)}</h2></button>
+      ${live?'':`<div class="row"><button class="btn ghost small" data-grp="${gp.id}" data-v="1">On</button><button class="btn ghost small" data-grp="${gp.id}" data-v="0">Off</button></div>`}</div>
+      ${closed?'':gp.rules.map(optHTML).join('')}</div>`;
+  }).join('');
+  return `<button class="colhead" data-col="std"><h2 style="margin:0">${arrow(S.ui.std)}Standard rules ${cnt(stdOn,std.length)}</h2></button>
   ${S.ui.std?'':std.map(optHTML).join('')}
-  <div class="top" style="margin-top:22px"><button class="colhead" data-col="sp"><h2 style="margin:0">${arrow(S.ui.sp)}Special rules <span style="text-transform:none;letter-spacing:0">(${on}/${sp.length} on)</span></h2></button>
-  ${S.g&&!S.g.over?'<span class="pill" style="white-space:nowrap">🔒 Locked</span>':'<div class="row"><button class="btn small" data-all="1">All on</button><button class="btn ghost small" data-all="0">All off</button></div>'}</div>
-  ${S.ui.sp?'':sp.map(optHTML).join('')}`;
+  <div class="top" style="margin-top:22px"><button class="colhead" data-col="sp"><h2 style="margin:0">${arrow(S.ui.sp)}Special rules ${cnt(on,sp.length)}</h2></button>
+  ${live?'<span class="pill" style="white-space:nowrap">🔒 Locked</span>':'<div class="row"><button class="btn small" data-all="1">All on</button><button class="btn ghost small" data-all="0">All off</button></div>'}</div>
+  ${S.ui.sp?'':groups}`;
 }
 function bindOpts(root, rerender){
-  root.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{ S.ui=S.ui||{}; S.ui[b.dataset.col]=!S.ui[b.dataset.col]; save(); rerender(); });
+  root.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{ S.ui=S.ui||{}; const k=b.dataset.col;
+    if(b.dataset.defaultClosed) S.ui[k] = (S.ui[k]===false) ? true : false; else S.ui[k]=!S.ui[k];
+    save(); rerender(); });
+  root.querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{ if(S.g&&!S.g.over) return;
+    const gp=groupedSpecial().find(x=>x.id===b.dataset.grp); gp.rules.forEach(r=>S.settings[r.k]=b.dataset.v==='1'); save(); rerender(); });
   root.querySelectorAll('.seg button[data-k]').forEach(b=>b.onclick=()=>{ if(b.dataset.k==='rounds'&&S.g&&!S.g.over) return; S.settings[b.dataset.k]=+b.dataset.c; save(); rerender(); });
   root.querySelectorAll('[data-all]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.all==='1';
@@ -784,7 +813,7 @@ function showHelp(){
       <li>Settings lock once the game starts, so agree on rules first.</li>
     </ul>
     <h3>✨ Special rules in play (${on.length})</h3>
-    ${on.length?`<ul>${on.map(li).join('')}</ul>`:'<p>None — classic Bank.</p>'}
+    ${on.length?groupedSpecial().map(gp=>{ const rs=gp.rules.filter(r=>st[r.k]); return rs.length?`<p style="margin:12px 0 2px;font-weight:700">${gp.t}</p><ul>${rs.map(li).join('')}</ul>`:''; }).join(''):'<p>None — classic Bank.</p>'}
     ${off.length?`<h3 class="off">Turned off</h3><ul class="off">${off.map(li).join('')}</ul>`:''}
     
   </div>`, ()=>{ $('closeH').onclick=()=>{ closeSheet(); try{ if(location.hash) history.replaceState(null,'',location.pathname+location.search); }catch(e){} }; });
