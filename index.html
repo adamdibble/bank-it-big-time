@@ -51,6 +51,9 @@ input[type=text]{flex:1;font:inherit;font-size:16px;padding:12px;border:1px soli
 .grp [data-grp]{padding:6px 10px;font-size:13px}
 .colhead h2{white-space:nowrap;font-size:15px}
 [data-all]{white-space:nowrap}
+.icoplay{background:none;border:none;padding:0 4px 0 0;font-size:inherit;line-height:1;cursor:pointer;border-radius:6px}
+.icoplay:active,.icoplay.playing{animation:icobounce .45s}
+@keyframes icobounce{30%{transform:scale(1.35)}60%{transform:scale(.9)}100%{transform:scale(1)}}
 .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
 .seg button{min-width:48px;height:36px;background:var(--surface);color:var(--ink);font-weight:700;font-size:15px;border-radius:0;border-left:1px solid var(--line)}
 .seg button:first-child{border-left:none}
@@ -139,7 +142,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.1</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.2</p>
 </section>
 
 <!-- GAME -->
@@ -228,7 +231,17 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
   sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
-const ttl=r=>(RULE_ICON[r.k]?RULE_ICON[r.k]+' ':'')+r.t;
+const RULE_SOUND={seven70:'lucky7',doublesDouble:'doubles',stackDoubles:'stack',matchRoll:'copycat',straight:'straight',jackpot7:'jackpot',
+  sevenEleven:'seven11',sixSeven:'sixseven',hatTrick:'hattrick',blackjack:'blackjack',nineToFive:'ninefive',no7Bonus:'no7',bustCurse:'curse',
+  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',
+  happyHour:'happy',ocean11:'ocean',finalDouble:'final',suddenDeath:'sudden'};
+// title with its icon; the icon is a button that plays the rule's sound
+const ttl=r=>{ const ic=RULE_ICON[r.k]; if(!ic) return r.t; const k=RULE_SOUND[r.k];
+  return (k?`<button type="button" class="icoplay" data-snd="${k}" aria-label="Play the ${r.t} sound">${ic}</button>`:ic+' ')+r.t; };
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-snd]'); if(!b) return;
+  e.preventDefault(); e.stopPropagation(); const d=FXDEF[b.dataset.snd]; if(!d) return;
+  const was=S.settings.sound; S.settings.sound=true; playSeqs([[d.tone,0,d.vol||1]]); S.settings.sound=was;
+  b.classList.remove('playing'); void b.offsetWidth; b.classList.add('playing'); },true);
 const GAME_OPTS = [
   {k:'rounds', t:'Rounds', type:'choice', def:20, opts:[10,15,20]},
   {k:'dark', t:'Dark mode', d:'Easier on the eyes for late-night games.', type:'bool', def:false},
