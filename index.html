@@ -139,7 +139,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 3.9</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.0</p>
 </section>
 
 <!-- GAME -->
@@ -211,6 +211,7 @@ const RULES = [
   {k:'sevenEleven', t:'7-Eleven', d:'A 7 during the safe rolls followed right away by an 11 (any players) adds 711 to the bank.', type:'bool', def:true},
   {k:'blackjack', t:'Blackjack', d:'Two back-to-back rolls in a round that add up to 21 (10 + 11 or 9 + 12, in either order) give whoever rolled the second one +210 to their score.', type:'bool', def:true},
   {k:'nineToFive', t:'9 to 5', d:'A 9 followed right away by a 5 gives everyone who hasn’t banked yet +95 to their score.', type:'bool', def:true},
+  {k:'deuces', t:'Deuces Wild (Marzi’s Madness)', d:'If anyone rolls a 2 during the safe rolls, everyone’s scores are randomly shuffled. Nobody keeps their own score. 💩', type:'bool', def:true},
   {k:'robinHood', t:'Robin Hood', d:'Rolling an 11 moves 100 points from the leader’s score to the player in last place.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
   {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
@@ -226,7 +227,7 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 }catch(e){} })();
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
-  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
 const ttl=r=>(RULE_ICON[r.k]?RULE_ICON[r.k]+' ':'')+r.t;
 const GAME_OPTS = [
   {k:'rounds', t:'Rounds', type:'choice', def:20, opts:[10,15,20]},
@@ -282,7 +283,7 @@ const RULE_GROUPS=[
   {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven','sixSeven']},
   {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','blackjack','nineToFive','no7Bonus']},
   {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches']},
-  {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate']},
+  {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate','deuces']},
   {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','finalDouble','suddenDeath']},
 ];
 function groupedSpecial(){ const sp=RULES.filter(r=>!r.std), used=new Set();
@@ -425,6 +426,19 @@ function roll(a,b){
       ev('robin','Robin Hood!',`${amt} from ${S.names[hi]} to ${S.names[lo]}`);
       bonus+=` 🏹 Robin Hood: ${amt} from ${S.names[hi]} to ${S.names[lo]}.`;
       addLog(`Robin Hood: ${amt} from ${S.names[hi]} to ${S.names[lo]}`);
+    }
+  }
+  if(st.deuces && safe && sum===2 && !blind){
+    const live=S.names.map((_,i)=>i).filter(i=>!(g.elim||[]).includes(i));
+    if(live.length>=2){
+      // random cycle (Sattolo) so every player ends up with someone else's score
+      const perm=live.slice();
+      for(let k=perm.length-1;k>0;k--){ const j=Math.floor(Math.random()*k); [perm[k],perm[j]]=[perm[j],perm[k]]; }
+      const old=g.scores.slice(); const moves=[];
+      live.forEach((p,k)=>{ g.scores[p]=old[perm[k]]; moves.push(`${S.names[p]} ← ${S.names[perm[k]]}’s ${old[perm[k]].toLocaleString()}`); });
+      ev('deuces','Deuces Wild!','Marzi’s Madness · everyone’s scores just got shuffled');
+      addLog(`Deuces Wild: ${moves.join(', ')}`);
+      bonus+=` 🌪️ Deuces Wild — Marzi’s Madness! Scores shuffled: ${moves.join('; ')}.`;
     }
   }
   if(safe){
@@ -692,6 +706,7 @@ const FXDEF={
   tres:    {e:'🍰',c:'#d01884',tone:[[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[523,.22,'square'],[659,.34,'square'],[0,.08],[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[523,.22,'square'],[659,.34,'square'],[0,.08],[523,.13,'square'],[0,.02],[523,.13,'square'],[0,.02],[494,.13,'square'],[0,.02],[494,.13,'square'],[0,.02],[440,.13,'square'],[0,.02],[440,.13,'square'],[0,.02],[392,.45,'square']],vol:.7},
   warn:    {e:'⚠️',c:'#e37400',tone:[[988,.07],[0,.06],[988,.07],[0,.06],[1319,.12]],vol:.55},
   sixseven:{e:'🤲',c:'#9334e6',tone:[[587,.14,'square'],[0,.04],[659,.3,'square'],[0,.06],[587,.1,'square'],[659,.1,'square'],[880,.3,'square']],vol:.7},
+  deuces:  {e:'🌪️',c:'#a142f4',tone:[[523,.045,'sawtooth'],[659,.045,'square'],[659,.045,'sawtooth'],[1319,.045,'square'],[784,.045,'sawtooth'],[1175,.045,'square'],[1175,.045,'sawtooth'],[988,.045,'square'],[523,.045,'sawtooth'],[784,.045,'square'],[1568,.045,'sawtooth'],[1568,.045,'square'],[2093,.045,'sawtooth'],[1319,.045,'square'],[2093,.045,'sawtooth'],[1760,.045,'square'],[2093,.045,'sawtooth'],[1175,.045,'square'],[523,.045,'sawtooth'],[523,.045,'square'],[1319,.045,'sawtooth'],[1760,.045,'square'],[0,.05],[1568,.08,'square'],[2093,.25,'square']],vol:.6},
   seven11: {e:'🏪',c:'#e8710a',tone:[[784,.1],[0,.05],[988,.1],[1175,.1],[1568,.3]]},
   blackjack:{e:'🃏',c:'#202124',tone:[[523,.08,'triangle'],[659,.08,'triangle'],[784,.08,'triangle'],[1047,.08,'triangle'],[1319,.3,'triangle']]},
   ninefive:{e:'🕘',c:'#188038',tone:[[1047,.06],[0,.05],[1047,.06],[0,.05],[1319,.06],[1568,.3]]},
@@ -702,7 +717,7 @@ function headsUp(rule,title,sub){ if(S.settings[rule]) ev('warn','Heads up: '+ti
 function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
 const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
   robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
-  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses'};
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses'};
 function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
 function recordFX(){
   if(!S.g) return; const st=stats();
@@ -776,7 +791,7 @@ $('fx').onclick=()=>$('fx').classList.remove('show');
 function testSounds(){
   const was=S.settings.sound; S.settings.sound=true;
   [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
-   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
    .forEach(([k,t])=>ev(k,t,'Sound test',-1));
   flushFX(); S.settings.sound=was;
 }
