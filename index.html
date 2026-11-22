@@ -139,7 +139,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.0</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.1</p>
 </section>
 
 <!-- GAME -->
@@ -211,7 +211,7 @@ const RULES = [
   {k:'sevenEleven', t:'7-Eleven', d:'A 7 during the safe rolls followed right away by an 11 (any players) adds 711 to the bank.', type:'bool', def:true},
   {k:'blackjack', t:'Blackjack', d:'Two back-to-back rolls in a round that add up to 21 (10 + 11 or 9 + 12, in either order) give whoever rolled the second one +210 to their score.', type:'bool', def:true},
   {k:'nineToFive', t:'9 to 5', d:'A 9 followed right away by a 5 gives everyone who hasn’t banked yet +95 to their score.', type:'bool', def:true},
-  {k:'deuces', t:'Deuces Wild (Marzi’s Madness)', d:'If anyone rolls a 2 during the safe rolls, everyone’s scores are randomly shuffled. Nobody keeps their own score. 💩', type:'bool', def:true},
+  {k:'deuces', t:'Deuces Wild (Marzi’s Madness)', d:'If anyone rolls a 2 during the safe rolls, everyone’s scores are randomly shuffled. You might even get your own back. 💩', type:'bool', def:true},
   {k:'robinHood', t:'Robin Hood', d:'Rolling an 11 moves 100 points from the leader’s score to the player in last place.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
   {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
@@ -431,11 +431,11 @@ function roll(a,b){
   if(st.deuces && safe && sum===2 && !blind){
     const live=S.names.map((_,i)=>i).filter(i=>!(g.elim||[]).includes(i));
     if(live.length>=2){
-      // random cycle (Sattolo) so every player ends up with someone else's score
+      // fully random shuffle (Fisher-Yates): anyone can end up with their own score
       const perm=live.slice();
-      for(let k=perm.length-1;k>0;k--){ const j=Math.floor(Math.random()*k); [perm[k],perm[j]]=[perm[j],perm[k]]; }
+      for(let k=perm.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [perm[k],perm[j]]=[perm[j],perm[k]]; }
       const old=g.scores.slice(); const moves=[];
-      live.forEach((p,k)=>{ g.scores[p]=old[perm[k]]; moves.push(`${S.names[p]} ← ${S.names[perm[k]]}’s ${old[perm[k]].toLocaleString()}`); });
+      live.forEach((p,k)=>{ g.scores[p]=old[perm[k]]; moves.push(perm[k]===p?`${S.names[p]} keeps their ${old[p].toLocaleString()}`:`${S.names[p]} ← ${S.names[perm[k]]}’s ${old[perm[k]].toLocaleString()}`); });
       ev('deuces','Deuces Wild!','Marzi’s Madness · everyone’s scores just got shuffled');
       addLog(`Deuces Wild: ${moves.join(', ')}`);
       bonus+=` 🌪️ Deuces Wild — Marzi’s Madness! Scores shuffled: ${moves.join('; ')}.`;
