@@ -142,7 +142,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.4</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.5</p>
 </section>
 
 <!-- GAME -->
@@ -215,6 +215,7 @@ const RULES = [
   {k:'blackjack', t:'Blackjack', d:'Two back-to-back rolls in a round that add up to 21 (10 + 11 or 9 + 12, in either order) give whoever rolled the second one +210 to their score.', type:'bool', def:true},
   {k:'nineToFive', t:'9 to 5', d:'A 9 followed right away by a 5 gives everyone who hasn’t banked yet +95 to their score.', type:'bool', def:true},
   {k:'deuces', t:'Deuces Wild (Marzi’s Madness)', d:'If anyone rolls a 2 during the safe rolls, everyone’s scores are randomly shuffled. You might even get your own back. 💩', type:'bool', def:true},
+  {k:'district12', t:'District 12', d:'Roll a 12 during the safe rolls and it’s the Reaping: everyone who hasn’t banked yet rolls once more, and the lowest roll is out for the rest of the round. Tied for lowest? Those players roll off until one is lowest.', type:'bool', def:true},
   {k:'robinHood', t:'Robin Hood', d:'Rolling an 11 moves 100 points from the leader’s score to the player in last place.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
   {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
@@ -230,10 +231,10 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 }catch(e){} })();
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
-  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'⛏️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
 const RULE_SOUND={seven70:'lucky7',doublesDouble:'doubles',stackDoubles:'stack',matchRoll:'copycat',straight:'straight',jackpot7:'jackpot',
   sevenEleven:'seven11',sixSeven:'sixseven',hatTrick:'hattrick',blackjack:'blackjack',nineToFive:'ninefive',no7Bonus:'no7',bustCurse:'curse',
-  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',
+  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',
   happyHour:'happy',ocean11:'ocean',finalDouble:'final',suddenDeath:'sudden'};
 // title with its icon; the icon is a button that plays the rule's sound
 const ttl=r=>{ const ic=RULE_ICON[r.k]; if(!ic) return r.t; const k=RULE_SOUND[r.k];
@@ -295,7 +296,7 @@ function optHTML(r){
 const RULE_GROUPS=[
   {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven','sixSeven']},
   {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','blackjack','nineToFive','no7Bonus']},
-  {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches']},
+  {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches','district12']},
   {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate','deuces']},
   {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','finalDouble','suddenDeath']},
 ];
@@ -568,8 +569,48 @@ function roll(a,b){
   } else {
     lastMsg={text:msg+bonus,cls: (msg.startsWith('+')&&!bonus)?'':'good'};
     g.roller=nextRoller(g.roller);
+    if(st.district12 && safe && sum===12 && !blind){
+      const tributes=active().filter(i=>!(g.elim||[]).includes(i));
+      if(tributes.length>=2){
+        g.reap={players:tributes, rolls:{}, ties:0};
+        ev('reap','District 12 — the Reaping!','Everyone still in rolls once · lowest roll is out this round');
+        addLog(`${who} rolled a 12 → the Reaping (${tributes.map(i=>S.names[i]).join(', ')})`);
+        lastMsg.text+=' ⛏️ The Reaping begins!';
+      }
+    }
   }
   save(); if(S.screen==='game') renderGame(!bust);
+}
+function showReap(){
+  const g=S.g, r=g.reap; if(!r) return;
+  const pending=r.players.filter(p=>r.rolls[p]==null), p=pending[0];
+  const done=r.players.filter(q=>r.rolls[q]!=null).map(q=>`<div>${esc(S.names[q])}: <b>${r.rolls[q]}</b></div>`).join('');
+  openSheet(`<div class="top"><h2 style="margin:0">⛏️ District 12 — the Reaping</h2></div>
+    <p class="sub" style="margin:10px 0">${r.ties?`Tie for lowest! ${r.players.map(q=>esc(S.names[q])).join(' and ')} roll again.`:'Everyone still in rolls once. The lowest roll is out for the rest of this round.'}</p>
+    <p style="font-size:18px;font-weight:800;margin:10px 0">${esc(S.names[p])}, roll the dice and tap your total</p>
+    <div class="dice">${[2,3,4,5,6,7,8,9,10,11,12].map(v=>`<button class="num" data-reap="${v}">${v}</button>`).join('')}</div>
+    <div style="margin-top:12px;color:var(--muted)">${done}</div>
+    <div class="bar"><button class="btn ghost" id="reapUndo">↶ Undo the 12</button></div>`,
+  ()=>{
+    $('sheet').querySelectorAll('[data-reap]').forEach(b=>b.onclick=()=>{ r.rolls[p]=+b.dataset.reap; save(); resolveReap(); });
+    $('reapUndo').onclick=()=>{ closeSheet(); $('undoBtn').click(); };
+  });
+}
+function resolveReap(){
+  const g=S.g, r=g.reap;
+  if(r.players.some(p=>r.rolls[p]==null)){ showReap(); return; }
+  const low=Math.min(...r.players.map(p=>r.rolls[p])), lows=r.players.filter(p=>r.rolls[p]===low);
+  addLog(`Reaping rolls: ${r.players.map(p=>S.names[p]+' '+r.rolls[p]).join(', ')}`);
+  if(lows.length>1){ r.players=lows; r.rolls={}; r.ties++; save(); showReap(); return; }
+  const out=lows[0];
+  g.reaped=(g.reaped||[]).concat(out); g.banked.push(out); delete g.reap;
+  ev('reaped','Reaped!',`${S.names[out]} rolled lowest (${low}) and is out this round`,out);
+  addLog(`${S.names[out]} rolled lowest (${low}) → out of the round`);
+  lastMsg={text:`⛏️ ${S.names[out]} rolled the lowest (${low}) and is out for the rest of this round.`,cls:'danger'};
+  if(g.roller===out) g.roller=nextRoller(out);
+  closeSheet(); save();
+  if(active().length===0){ endRound(); }
+  renderGame();
 }
 function bankPlayer(i){
   const g=S.g, st=S.settings;
@@ -606,7 +647,7 @@ function safeN(){ return S.settings.safe; }
 function endRound(afterBust){
   const g=S.g;
   if(g.round>=S.settings.rounds){ gameOver(); return; }
-  g.round++; g.bank=0; g.rolls=0; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.banked=[...(g.elim||[])]; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
+  g.round++; g.bank=0; g.rolls=0; g.reaped=[]; delete g.reap; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.banked=[...(g.elim||[])]; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
   // the dice always pass to the seat after whoever rolled last,
   // whether the round ended in a bust or with everyone banking
   const last = (g.lastRoller!==undefined) ? g.lastRoller : g.roller;
@@ -629,7 +670,7 @@ function gameOver(){
     const [p1,p2]=order, gap=g.scores[p1]-g.scores[p2];
     const trigger = g.sd ? gap===0 : gap<=100;   // first time: within 100; after a bonus round: only an exact tie
     if(trigger){
-      g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.sd=true; g.sdPlayers=[p1,p2]; g.sdCount=(g.sdCount||0)+1;
+      g.reaped=[]; delete g.reap; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.sd=true; g.sdPlayers=[p1,p2]; g.sdCount=(g.sdCount||0)+1;
       g.bank=0; g.rolls=0; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
       g.banked=S.names.map((_,i)=>i).filter(i=>i!==p1&&i!==p2);
       const last=(g.lastRoller!==undefined)?g.lastRoller:g.roller;
@@ -686,11 +727,12 @@ function renderGame(pop){
     return `<button class="pcard ${b?'banked':''} ${i===g.roller&&!b?'turn':''}" data-i="${i}">
       <div class="n"><span>${esc(S.names[i])}</span>${i===g.roller&&!b?'🎲':''}</div>
       <div class="s">${g.scores[i].toLocaleString()}</div>${behind(i)}
-      <div class="a">${(g.elim||[]).includes(i)?'🗑️ Disqualified':g.sd&&g.sdPlayers&&!g.sdPlayers.includes(i)?'Sitting out':b?'Banked ✓':'Tap to BANK'}${st.loserBaby&&g.b7&&g.b7[i]&&!(g.elim||[]).includes(i)?` · busts ${g.b7[i]}/10`:''}${st.pennyPincher&&g.fb&&g.fb[i]&&!(g.elim||[]).includes(i)?` · 🪙 ${g.fb[i]}/5`:''}${st.hatTrick&&g.pDbl&&g.pDbl[i]?` · 🎩 ${g.pDbl[i]}/3`:''}${st.bustCurse&&g.lastBuster===i&&g.bustRun>0&&!(g.elim||[]).includes(i)?` · ⚠️ ${g.bustRun} bust${g.bustRun>1?'s':''} in a row`:''}${st.no7Bonus&&g.pRolls&&g.pRolls[i]&&!g.p7[i]?' · 🎰 no 7s':''}</div></button>`;
+      <div class="a">${(g.elim||[]).includes(i)?'🗑️ Disqualified':(g.reaped||[]).includes(i)?'⛏️ Reaped':g.sd&&g.sdPlayers&&!g.sdPlayers.includes(i)?'Sitting out':b?'Banked ✓':'Tap to BANK'}${st.loserBaby&&g.b7&&g.b7[i]&&!(g.elim||[]).includes(i)?` · busts ${g.b7[i]}/10`:''}${st.pennyPincher&&g.fb&&g.fb[i]&&!(g.elim||[]).includes(i)?` · 🪙 ${g.fb[i]}/5`:''}${st.hatTrick&&g.pDbl&&g.pDbl[i]?` · 🎩 ${g.pDbl[i]}/3`:''}${st.bustCurse&&g.lastBuster===i&&g.bustRun>0&&!(g.elim||[]).includes(i)?` · ⚠️ ${g.bustRun} bust${g.bustRun>1?'s':''} in a row`:''}${st.no7Bonus&&g.pRolls&&g.pRolls[i]&&!g.p7[i]?' · 🎰 no 7s':''}</div></button>`;
   }).join('');
   $('pcards').querySelectorAll('.pcard').forEach(c=>c.onclick=()=>bankPlayer(+c.dataset.i));
   $('log').innerHTML=g.log.map(l=>`<div>${esc(l)}</div>`).join('');
   flushFX();
+  if(g.reap) setTimeout(showReap,0);
 }
 
 /* ---------- effects ---------- */
@@ -718,6 +760,8 @@ const FXDEF={
   warn:    {e:'⚠️',c:'#e37400',tone:[[880,.12,'triangle'],[660,.12,'triangle'],[880,.12,'triangle'],[660,.18,'triangle']],vol:.55},
   sixseven:{e:'🤲',c:'#9334e6',tone:[[587,.14,'square'],[0,.04],[659,.3,'square'],[0,.06],[587,.1,'square'],[659,.1,'square'],[880,.3,'square']],vol:.7},
   deuces:  {e:'🌪️',c:'#a142f4',tone:[[523,.045,'sawtooth'],[659,.045,'square'],[659,.045,'sawtooth'],[1319,.045,'square'],[784,.045,'sawtooth'],[1175,.045,'square'],[1175,.045,'sawtooth'],[988,.045,'square'],[523,.045,'sawtooth'],[784,.045,'square'],[1568,.045,'sawtooth'],[1568,.045,'square'],[2093,.045,'sawtooth'],[1319,.045,'square'],[2093,.045,'sawtooth'],[1760,.045,'square'],[2093,.045,'sawtooth'],[1175,.045,'square'],[523,.045,'sawtooth'],[523,.045,'square'],[1319,.045,'sawtooth'],[1760,.045,'square'],[0,.05],[1568,.08,'square'],[2093,.25,'square']],vol:.6},
+  reap:    {e:'⛏️',c:'#5d4037',tone:[[55,.3,'square'],[0,.18],[247,.12,'triangle'],[262,.12,'triangle'],[277,.12,'triangle'],[294,.6,'triangle'],[0,.1],[277,.5,'triangle']],vol:.7},
+  reaped:  {e:'🚪',c:'#3e2723',tone:[[49,.45,'square'],[0,.12],[41,.7,'square']],vol:.8},
   seven11: {e:'🏪',c:'#e8710a',tone:[[784,.1],[0,.05],[988,.1],[1175,.1],[1568,.3]]},
   blackjack:{e:'🃏',c:'#202124',tone:[[1319,.05,'square'],[0,.03],[1319,.05,'square'],[0,.07],[698,.1,'triangle'],[880,.1,'triangle'],[1047,.1,'triangle'],[1397,.35,'triangle']]},
   ninefive:{e:'🕘',c:'#188038',tone:[[2637,.012,'square'],[0,.07],[2349,.012,'square'],[0,.05],[2794,.012,'square'],[0,.08],[2489,.012,'square'],[0,.04],[2637,.012,'square'],[0,.06],[2217,.012,'square'],[0,.05],[2794,.012,'square'],[0,.12],[1175,.05,'square'],[1047,.05,'square'],[0,.06],[2093,.5]]},
@@ -728,7 +772,7 @@ function headsUp(rule,title,sub){ if(S.settings[rule]) ev('warn','Heads up: '+ti
 function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
 const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
   robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
-  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses'};
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'⛏️ Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses'};
 function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
 function recordFX(){
   if(!S.g) return; const st=stats();
@@ -802,7 +846,7 @@ $('fx').onclick=()=>$('fx').classList.remove('show');
 function testSounds(){
   const was=S.settings.sound; S.settings.sound=true;
   [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
-   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
    .forEach(([k,t])=>ev(k,t,'Sound test',-1));
   flushFX(); S.settings.sound=was;
 }
@@ -845,7 +889,7 @@ window.addEventListener('hashchange',checkHash);
 /* ---------- sheets ---------- */
 function openSheet(html,bind){ $('sheet').innerHTML=html; $('overlay').classList.remove('hidden'); bind&&bind(); }
 function closeSheet(){ $('overlay').classList.add('hidden'); }
-$('overlay').onclick=e=>{ if(e.target.id==='overlay') closeSheet(); };
+$('overlay').onclick=e=>{ if(e.target.id==='overlay' && !(S.g&&S.g.reap)) closeSheet(); };
 $('menuBtn').onclick=showMenu;
 function showMenu(){
   openSheet(`<div class="top"><h2 style="margin:0">Settings</h2><button class="btn ghost small" id="closeS">Done</button></div>
