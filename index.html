@@ -139,7 +139,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 3.8</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 3.9</p>
 </section>
 
 <!-- GAME -->
@@ -207,6 +207,7 @@ const RULES = [
   {k:'pirate', t:'Pirate’s booty', d:'If three non-double 8s are rolled in a row in a round (by anyone), whoever rolled the third one steals 10% of every other player’s score. Just tap 8; a Doubles roll breaks the streak.', type:'bool', def:true},
   {k:'reverse', t:'Reverse', d:'Rolling a 3 flips the direction of play, like an UNO reverse card. It stays that way until someone rolls another 3. Best with 3 or more players.', type:'bool', def:true},
   {k:'tresLeches', t:'Tres leches', d:'If three 3s are rolled in a row in a round (by anyone), whoever rolled the third one has their score revalued as if it were Mexican pesos instead of US dollars, at the current exchange rate. Their score shrinks to about 1/18th.', type:'bool', def:true},
+  {k:'sixSeven', t:'6-7!', d:'After the safe rolls, if one player rolls a 6 and the very next roll, by someone else, is a 7, the round doesn’t bust. The bank doubles instead and play goes on.', type:'bool', def:true},
   {k:'sevenEleven', t:'7-Eleven', d:'A 7 during the safe rolls followed right away by an 11 (any players) adds 711 to the bank.', type:'bool', def:true},
   {k:'blackjack', t:'Blackjack', d:'Two back-to-back rolls in a round that add up to 21 (10 + 11 or 9 + 12, in either order) give whoever rolled the second one +210 to their score.', type:'bool', def:true},
   {k:'nineToFive', t:'9 to 5', d:'A 9 followed right away by a 5 gives everyone who hasn’t banked yet +95 to their score.', type:'bool', def:true},
@@ -225,7 +226,7 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 }catch(e){} })();
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
-  sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
 const ttl=r=>(RULE_ICON[r.k]?RULE_ICON[r.k]+' ':'')+r.t;
 const GAME_OPTS = [
   {k:'rounds', t:'Rounds', type:'choice', def:20, opts:[10,15,20]},
@@ -278,7 +279,7 @@ function optHTML(r){
   return `<div class="rule"><div><div class="t">${ttl(r)}</div>${r.d?`<div class="d">${r.d}</div>`:''}</div>${ctl}</div>`;
 }
 const RULE_GROUPS=[
-  {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven']},
+  {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven','sixSeven']},
   {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','blackjack','nineToFive','no7Bonus']},
   {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches']},
   {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate']},
@@ -430,7 +431,11 @@ function roll(a,b){
     if(sum===7 && st.seven70){ msg = match ? add(70) : (ev('lucky7','Lucky 7!',`+${70*hhm} to the bank`), g.bank+=70*hhm, `Lucky 7! +${70*hhm}`); }
     else { msg=(ocean?'Ocean’s 11! ':'')+add(ocean?1100:sum); }
   } else {
-    if(sum===7){ bust=true; msg='7 — BUST!'; ev('bust','BUST!',`${who} rolled a 7`); }
+    if(sum===7 && st.sixSeven && g.lastSum===6 && g.lastSumBy!==g.roller){
+      g.bank*=2; msg='6-7! Bank doubled'; ev('sixseven','6-7!',`${S.names[g.lastSumBy]} rolled 6, ${who} rolled 7 · no bust, bank ×2`);
+      addLog(`6 then 7 → 6-7! Bank doubled instead of busting`);
+    }
+    else if(sum===7){ bust=true; msg='7 — BUST!'; ev('bust','BUST!',`${who} rolled a 7`); }
     else if(dbl && st.doublesDouble){ const m=dblMult(); g.bank*=m; msg=dblMsg(m); keepStreak=true; }
     else { msg=(ocean?'Ocean’s 11! ':'')+add(ocean?1100:sum); }
   }
@@ -453,7 +458,7 @@ function roll(a,b){
     }
   }
   g.prevSafe7 = !bust && !blind && safe && sum===7;
-  g.lastSum = blind ? null : sum;
+  g.lastSum = blind ? null : sum; g.lastSumBy = g.roller;
   if(jackpot){ g.bank=Math.max(7000,g.bank); msg='Triple Lucky 7s! Bank = 7,000'; FXQ=FXQ.filter(x=>!['lucky7','copycat'].includes(x.kind)); ev('jackpot','JACKPOT!','Three 7s · bank = 7,000'); }
   if(strBonus && !bust) g.bank += strBonus;
   if(strBonus && bust){ FXQ=FXQ.filter(x=>x.kind!=='straight'); bonus=bonus.replace(/ 🎉 Team straight[^!]*!/,''); }
@@ -635,6 +640,7 @@ function renderGame(pop){
     + (st.matchRoll && g.lastSum ? `<br>Last roll: ${g.lastSum} · match it for ×2` : '')
     + (st.tresLeches && g.threeRun===2 ? `<br><span style="color:#d01884;font-weight:700">🍰 Two 3s in a row — one more and it’s tres leches</span>` : '')
     + (st.pirate && g.eightRun===2 ? `<br><span style="color:#b06000;font-weight:700">🏴‍☠️ Two 8s in a row — one more (not doubles) and the pirate strikes</span>` : '')
+    + (st.sixSeven && !inSafe && g.lastSum===6 && g.lastSumBy!==g.roller ? `<br><span style="color:#9334e6;font-weight:700">🤲 6-7 is live — a 7 now doubles the bank instead of busting</span>` : '')
     + (st.devil && g.sixRun===2 ? `<br><span style="color:var(--warn);font-weight:700">😈 Two 6s in a row — one more (not doubles) and the devil strikes</span>` : '')
     + (st.straight && g.tHist && g.tHist.length ? `<br>Straight watch: ${g.tHist.join(' · ')}` : '');
   armDbl=false;
@@ -685,6 +691,7 @@ const FXDEF={
   reverse: {e:'🔁',c:'#9334e6',tone:[[880,.07],[784,.07],[659,.07],[523,.07],[0,.04],[523,.07],[659,.07],[784,.07],[880,.2]]},
   tres:    {e:'🍰',c:'#d01884',tone:[[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[523,.22,'square'],[659,.34,'square'],[0,.08],[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[392,.11,'square'],[0,.02],[523,.22,'square'],[659,.34,'square'],[0,.08],[523,.13,'square'],[0,.02],[523,.13,'square'],[0,.02],[494,.13,'square'],[0,.02],[494,.13,'square'],[0,.02],[440,.13,'square'],[0,.02],[440,.13,'square'],[0,.02],[392,.45,'square']],vol:.7},
   warn:    {e:'⚠️',c:'#e37400',tone:[[988,.07],[0,.06],[988,.07],[0,.06],[1319,.12]],vol:.55},
+  sixseven:{e:'🤲',c:'#9334e6',tone:[[587,.14,'square'],[0,.04],[659,.3,'square'],[0,.06],[587,.1,'square'],[659,.1,'square'],[880,.3,'square']],vol:.7},
   seven11: {e:'🏪',c:'#e8710a',tone:[[784,.1],[0,.05],[988,.1],[1175,.1],[1568,.3]]},
   blackjack:{e:'🃏',c:'#202124',tone:[[523,.08,'triangle'],[659,.08,'triangle'],[784,.08,'triangle'],[1047,.08,'triangle'],[1319,.3,'triangle']]},
   ninefive:{e:'🕘',c:'#188038',tone:[[1047,.06],[0,.05],[1047,.06],[0,.05],[1319,.06],[1568,.3]]},
@@ -695,7 +702,7 @@ function headsUp(rule,title,sub){ if(S.settings[rule]) ev('warn','Heads up: '+ti
 function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
 const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
   robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
-  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses'};
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses'};
 function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
 function recordFX(){
   if(!S.g) return; const st=stats();
@@ -769,7 +776,7 @@ $('fx').onclick=()=>$('fx').classList.remove('show');
 function testSounds(){
   const was=S.settings.sound; S.settings.sound=true;
   [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
-   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
    .forEach(([k,t])=>ev(k,t,'Sound test',-1));
   flushFX(); S.settings.sound=was;
 }
