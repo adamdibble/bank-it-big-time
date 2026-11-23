@@ -142,7 +142,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 5.2</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 5.3</p>
 </section>
 
 <!-- GAME -->
@@ -219,9 +219,12 @@ const RULES = [
   {k:'robinHood', t:'Robin Hood', d:'Rolling an 11 moves 100 points from the leader’s score to the player in last place.', type:'bool', def:true},
   {k:'lastChicken', t:'Last chicken', d:'If you’re the last player still in the round and you bank before the 7, you get +150 to your score for your nerve. Somebody else has to have been in the round with you.', type:'bool', def:true},
   {k:'mercy', t:'Mercy rule', d:'At the end of round 10, anyone with less than half the leader’s score is out of the game. Their score freezes and they can’t win. Only matters in 15- and 20-round games.', type:'bool', def:true},
-  {k:'emergency911', t:'What’s your emergency?', d:'Roll the dice that makes the bank exactly 911 and you’re rushed out for the rest of the round. You also pay up to 1,000 points in medical bills (your score can’t go below 0). You’re back in next round.', type:'bool', def:true},
-  {k:'hell666', t:'Go to hell', d:'Roll the dice that makes the bank exactly 666 and you go to hell. Your score drops to 0 (you can’t take it with you) and you’re out of the game.', type:'bool', def:true},
-  {k:'heaven777', t:'Go to heaven', d:'Roll the dice that makes the bank exactly 777 and you go to heaven: you win the game on the spot, no matter what the scores are.', type:'bool', def:true},
+  {k:'emergency911', t:'What’s your emergency? (911)', d:'Roll the dice that makes the bank exactly 911 and you’re rushed out for the rest of the round. You also pay up to 1,000 points in medical bills (your score can’t go below 0). You’re back in next round.', type:'bool', def:true},
+  {k:'hell666', t:'Go to hell (666)', d:'Roll the dice that makes the bank exactly 666 and you go to hell. Your score drops to 0 (you can’t take it with you) and you’re out of the game.', type:'bool', def:true},
+  {k:'heaven777', t:'Go to heaven (777)', d:'Roll the dice that makes the bank exactly 777 and you go to heaven: you win the game on the spot, no matter what the scores are.', type:'bool', def:true},
+  {k:'high420', t:'Too high to play (420)', d:'Roll the dice that makes the bank exactly 420 and you’re too high to play: you’re out for the rest of this round and the next two rounds.', type:'bool', def:true},
+  {k:'notFound404', t:'Not Found (404)', d:'Roll the dice that makes the bank exactly 404 and you can’t be found: you skip your next turn.', type:'bool', def:true},
+  {k:'y2k', t:'Y2K (2,000)', d:'If a roll makes the bank exactly 2,000, the bank glitches and resets to a random amount between 0 and 4,000.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
   {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
 ];
@@ -236,10 +239,10 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 }catch(e){} })();
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
-  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',mercy:'🏳️',emergency911:'🚑',hell666:'👹',heaven777:'😇',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',mercy:'🏳️',emergency911:'🚑',hell666:'👹',heaven777:'😇',high420:'🌿',notFound404:'🔍',y2k:'💾',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
 const RULE_SOUND={seven70:'lucky7',doublesDouble:'doubles',stackDoubles:'stack',matchRoll:'copycat',straight:'straight',jackpot7:'jackpot',
   sevenEleven:'seven11',sixSeven:'sixseven',hatTrick:'hattrick',blackjack:'blackjack',nineToFive:'ninefive',no7Bonus:'no7',bustCurse:'curse',
-  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',mercy:'mercy',emergency911:'siren',hell666:'hell',heaven777:'heaven',
+  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',mercy:'mercy',emergency911:'siren',hell666:'hell',heaven777:'heaven',high420:'high',notFound404:'notfound',y2k:'y2k',
   happyHour:'happy',ocean11:'ocean',finalDouble:'final',suddenDeath:'sudden'};
 // title with its icon; the icon is a button that plays the rule's sound
 const ttl=r=>{ const ic=RULE_ICON[r.k]; if(!ic) return r.t; const k=RULE_SOUND[r.k];
@@ -304,7 +307,7 @@ const RULE_GROUPS=[
   {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven','sixSeven']},
   {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','blackjack','nineToFive','lastChicken','no7Bonus']},
   {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches','district12']},
-  {id:'num',   t:'🎯 Bank-number rules', keys:['hell666','heaven777','emergency911']},
+  {id:'num',   t:'🎯 Bank-number rules', keys:['notFound404','high420','hell666','heaven777','emergency911','y2k']},
   {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate','deuces']},
   {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','mercy','finalDouble','suddenDeath']},
 ];
@@ -371,6 +374,11 @@ function startGame(){
 function snap(){ S.hist.push(JSON.stringify(S.g)); if(S.hist.length>200) S.hist.shift(); }
 function n(){return S.names.length}
 function active(){return S.names.map((_,i)=>i).filter(i=>!S.g.banked.includes(i))}
+// advance to the next roller, honoring 404 skips
+function advRoller(from){ const g=S.g; let r=nextRoller(from);
+  for(let k=0;k<n() && g.skip && g.skip.includes(r);k++){ g.skip=g.skip.filter(x=>x!==r);
+    if(active().length>1){ addLog(`${S.names[r]} skipped (404)`); r=nextRoller(r); } }
+  return r; }
 function nextRoller(from){
   const a=active(); if(!a.length) return from;
   const d=(S.g&&S.g.dir===-1)?-1:1;
@@ -589,18 +597,30 @@ function roll(a,b){
       ev('heaven','Go to heaven!',`${who} hit 777 · wins the game`,g.roller);
       addLog(`${who} made the bank 777 → went to heaven and wins the game`);
       save(); gameOver(); return;
+    } else if(st.high420 && g.bank===420){
+      const r=g.roller; g.highUntil=g.highUntil||{}; g.highUntil[r]=g.round+2; if(!g.banked.includes(r)) g.banked.push(r);
+      ev('high','Too high to play!',`${who} hit 420 · out this round and the next two`,r);
+      addLog(`${who} made the bank 420 → too high, out through round ${g.round+2}`);
+      lastMsg={text:`🌿 The bank hit 420! ${who} is too high to play — out for the rest of this round and the next two rounds (back in round ${g.round+3}).`,cls:'danger'};
+    } else if(st.notFound404 && g.bank===404){
+      g.skip=(g.skip||[]).filter(x=>x!==g.roller).concat(g.roller);
+      ev('notfound','404 Not Found!',`${who} hit 404 · skips their next turn`,g.roller);
+      addLog(`${who} made the bank 404 → skips their next turn`);
+      lastMsg={text:`🔍 The bank hit 404! ${who} can’t be found and skips their next turn.`,cls:'danger'};
+    } else if(st.y2k && g.bank===2000){
+      const nb=Math.floor(Math.random()*4001); g.bank=nb;
+      ev('y2k','Y2K!',`The bank glitched · 2,000 → ${nb.toLocaleString()}`,g.roller);
+      addLog(`${who} made the bank 2,000 → Y2K glitch, bank reset to ${nb}`);
+      lastMsg={text:`💾 Y2K! The bank hit 2,000 and glitched — it’s now ${nb.toLocaleString()}.`,cls:nb>=2000?'good':'danger'};
     } else if(st.emergency911 && g.bank===911){
       const r=g.roller, paid=Math.min(1000,Math.max(0,g.scores[r]));
       g.scores[r]-=paid; g.er=(g.er||[]).concat(r); g.banked.push(r);
       ev('siren','What’s your emergency?',`${who} hit 911 · out this round · ${paid.toLocaleString()} in medical bills`,r);
       addLog(`${who} made the bank 911 → out of the round, paid ${paid} in medical bills`);
       lastMsg={text:`🚑 The bank hit 911! ${who} is out for the rest of the round and pays ${paid.toLocaleString()} in medical bills.`,cls:'danger'};
-    } else {
-      [['hell666',666,'👹 Go to hell','sends the roller to hell'],['heaven777',777,'😇 Go to heaven','wins the game'],['emergency911',911,'🚑 What’s your emergency?','makes it 911']]
-        .forEach(([k,T,t,what])=>{ const d=T-g.bank; if(st[k] && d>=2 && d<=12) headsUp(k,t,`Bank is at ${g.bank.toLocaleString()} — a ${d} ${k==='emergency911'?what:'makes it '+T+' and '+what}`); });
     }
     if(active().length===0){ lastMsg.text+=' Nobody left — round over.'; endRound(); save(); if(S.screen==='game') renderGame(true); return; }
-    g.roller=nextRoller(g.roller);
+    g.roller=advRoller(g.roller);
     if(st.district12 && safe && sum===12 && !blind){
       const tributes=active().filter(i=>!(g.elim||[]).includes(i));
       if(tributes.length>=2){
@@ -674,7 +694,7 @@ function bankPlayer(i){
   }
   if(chicken){ g.scores[i]+=150; ev('chicken','Last chicken!',`${S.names[i]} held out longest · +150`,i); addLog(`${S.names[i]} was the last chicken → +150`); lastMsg.text+=` 🐔 Last chicken: +150 for nerve!`; }
   if(active().length===0){ lastMsg.text+=' Everyone’s in — round over.'; g.bustRun=0; g.lastBuster=null; endRound(); }
-  else if(g.roller===i){ g.roller=nextRoller(i); }
+  else if(g.roller===i){ g.roller=advRoller(i); }
   save(); renderGame();
 }
 function safeN(){ return S.settings.safe; }
@@ -689,6 +709,7 @@ function endRound(afterBust){
       g.mercy=(g.mercy||[]).concat(out); g.elim.push(...out);
       const nm=out.map(i=>S.names[i]).join(', ');
       ev('mercy','Mercy rule!',`${nm} ${out.length>1?'are':'is'} under half the leader’s score · out of the game`,-1);
+      notice('🏳️','Mercy rule',`${nm} ${out.length>1?'had':'had'} less than half the leader’s score (${Math.floor(top/2).toLocaleString()}) after round 10 and ${out.length>1?'are':'is'} out of the game. ${out.length>1?'Their scores freeze':'Their score freezes'} and ${out.length>1?'they':'they'} can’t win.`);
       addLog(`Mercy rule after round 10: ${nm} out (under ${Math.floor(top/2)})`);
       if(live.length-out.length<2){ gameOver(); return; }
     }
@@ -697,13 +718,15 @@ function endRound(afterBust){
   // the dice always pass to the seat after whoever rolled last,
   // whether the round ended in a bust or with everyone banking
   const last = (g.lastRoller!==undefined) ? g.lastRoller : g.roller;
+  if(g.highUntil){ const hi=Object.keys(g.highUntil).map(Number).filter(i=>g.highUntil[i]>=g.round && !g.banked.includes(i));
+    if(hi.length && S.names.some((_,i)=>!g.banked.includes(i)&&!hi.includes(i))) g.banked.push(...hi); else hi.forEach(i=>delete g.highUntil[i]); }
   g.roller=((last+((g.dir===-1)?-1:1))%n()+n())%n();
-  if(g.banked.includes(g.roller)) g.roller=nextRoller(g.roller);
-  if(S.settings.happyHour && g.round===5) ev('happy','Happy hour!','Round 5 — every roll counts double',-1);
+  if(g.banked.includes(g.roller) || (g.skip&&g.skip.includes(g.roller))){ const d=(g.dir===-1)?1:-1; g.roller=advRoller(((g.roller+d)%n()+n())%n()); }
+  if(S.settings.happyHour && g.round===5){ ev('happy','Happy hour!','Round 5 — every roll counts double',-1); notice('🎉','Happy hour — round 5','Every roll’s points count double this round, including Lucky 7s (140).'); }
   if(S.settings.mercy && g.round===10 && S.settings.rounds>10){ const L=S.names.map((_,i)=>i).filter(i=>!(g.elim||[]).includes(i)), top=Math.max(...L.map(i=>g.scores[i])), risk=L.filter(i=>g.scores[i]<top/2).map(i=>S.names[i]);
-    headsUp('mercy','🏳️ Mercy rule',`After this round, anyone under half the leader’s score is out${risk.length?` — right now that’s ${risk.join(', ')}`:''}`); }
-  if(S.settings.ocean11 && g.round===11) ev('ocean','Ocean’s 11!','Round 11 — an 11 is worth 1,100',-1);
-  if(S.settings.finalDouble && g.round===S.settings.rounds) ev('final','Final round!','Banking pays ×2 — make it count',-1);
+    notice('🏳️','Mercy rule — round 10',`When this round ends, anyone with less than half the leader’s score (under ${Math.floor(top/2).toLocaleString()} right now) is out of the game. ${risk.length?`Right now that’s ${risk.join(', ')}.`:'Right now everyone is safe.'}`); }
+  if(S.settings.ocean11 && g.round===11){ ev('ocean','Ocean’s 11!','Round 11 — an 11 is worth 1,100',-1); notice('🌊','Ocean’s 11 — round 11','An 11 adds 1,100 to the bank this round instead of 11. Robin Hood still triggers too.'); }
+  if(S.settings.finalDouble && g.round===S.settings.rounds){ ev('final','Final round!','Banking pays ×2 — make it count',-1); notice('🏁','Final round frenzy',`This is round ${g.round}, the last one. Banking pays double the bank, so make it count.`); }
 }
 function gameOver(){
   const g=S.g;
@@ -723,6 +746,7 @@ function gameOver(){
       g.banked=S.names.map((_,i)=>i).filter(i=>i!==p1&&i!==p2);
       const last=(g.lastRoller!==undefined)?g.lastRoller:g.roller;
       g.roller=((last+((g.dir===-1)?-1:1))%n()+n())%n(); if(g.banked.includes(g.roller)) g.roller=nextRoller(g.roller);
+      notice('⚔️', g.sdCount>1?'Still tied — sudden death again':'Sudden death', `${S.names[p1]} and ${S.names[p2]} ${gap?`finished ${gap} points apart`:'are tied'}, so they play one bonus round, just the two of them. Everyone else sits out. Highest score after the round wins${g.sdCount>1?'':' (if it’s still an exact tie, another bonus round)'}.`);
       ev('sudden', g.sdCount>1?'Still tied — sudden death again!':'Sudden death!', `${S.names[p1]} vs ${S.names[p2]} · ${gap?gap+' points apart':'tied'} · one bonus round`, -1);
       addLog(`Sudden death: ${S.names[p1]} vs ${S.names[p2]} (${gap} apart)`);
       lastMsg={text:`⚔️ Sudden death! ${S.names[p1]} and ${S.names[p2]} play one bonus round.`,cls:'danger'};
@@ -775,12 +799,13 @@ function renderGame(pop){
     return `<button class="pcard ${b?'banked':''} ${i===g.roller&&!b?'turn':''}" data-i="${i}">
       <div class="n"><span>${esc(S.names[i])}</span>${i===g.roller&&!b?'🎲':''}</div>
       <div class="s">${g.scores[i].toLocaleString()}</div>${behind(i)}
-      <div class="a">${(g.hell||[]).includes(i)?'👹 Gone to hell':(g.mercy||[]).includes(i)?'🏳️ Out (mercy rule)':(g.elim||[]).includes(i)?'🗑️ Disqualified':(g.reaped||[]).includes(i)?'🐦 Reaped':(g.er||[]).includes(i)?'🚑 In the hospital':g.sd&&g.sdPlayers&&!g.sdPlayers.includes(i)?'Sitting out':b?'Banked ✓':'Tap to BANK'}${st.loserBaby&&g.b7&&g.b7[i]&&!(g.elim||[]).includes(i)?` · busts ${g.b7[i]}/10`:''}${st.pennyPincher&&g.fb&&g.fb[i]&&!(g.elim||[]).includes(i)?` · 🪙 ${g.fb[i]}/5`:''}${st.hatTrick&&g.pDbl&&g.pDbl[i]?` · 🎩 ${g.pDbl[i]}/3`:''}${st.bustCurse&&g.lastBuster===i&&g.bustRun>0&&!(g.elim||[]).includes(i)?` · ⚠️ ${g.bustRun} bust${g.bustRun>1?'s':''} in a row`:''}${st.no7Bonus&&g.pRolls&&g.pRolls[i]&&!g.p7[i]&&!(g.elim||[]).includes(i)?' · 🎰 no 7s':''}</div></button>`;
+      <div class="a">${(g.hell||[]).includes(i)?'👹 Gone to hell':(g.mercy||[]).includes(i)?'🏳️ Out (mercy rule)':(g.elim||[]).includes(i)?'🗑️ Disqualified':(g.reaped||[]).includes(i)?'🐦 Reaped':(g.er||[]).includes(i)?'🚑 In the hospital':g.highUntil&&g.highUntil[i]>=g.round?`🌿 Too high (back round ${g.highUntil[i]+1})`:g.skip&&g.skip.includes(i)&&!b?'🔍 Skips next turn':g.sd&&g.sdPlayers&&!g.sdPlayers.includes(i)?'Sitting out':b?'Banked ✓':'Tap to BANK'}${st.loserBaby&&g.b7&&g.b7[i]&&!(g.elim||[]).includes(i)?` · busts ${g.b7[i]}/10`:''}${st.pennyPincher&&g.fb&&g.fb[i]&&!(g.elim||[]).includes(i)?` · 🪙 ${g.fb[i]}/5`:''}${st.hatTrick&&g.pDbl&&g.pDbl[i]?` · 🎩 ${g.pDbl[i]}/3`:''}${st.bustCurse&&g.lastBuster===i&&g.bustRun>0&&!(g.elim||[]).includes(i)?` · ⚠️ ${g.bustRun} bust${g.bustRun>1?'s':''} in a row`:''}${st.no7Bonus&&g.pRolls&&g.pRolls[i]&&!g.p7[i]&&!(g.elim||[]).includes(i)?' · 🎰 no 7s':''}</div></button>`;
   }).join('');
   $('pcards').querySelectorAll('.pcard').forEach(c=>c.onclick=()=>bankPlayer(+c.dataset.i));
   $('log').innerHTML=g.log.map(l=>`<div>${esc(l)}</div>`).join('');
   flushFX();
-  if(g.reap) setTimeout(showReap,0);
+  if(g.notices&&g.notices.length) setTimeout(showNotice,900);
+  else if(g.reap) setTimeout(showReap,0);
   if(g.deucesShow){ const d=g.deucesShow; delete g.deucesShow; save(); setTimeout(()=>showDeuces(d),1600); }
 }
 function showDeuces(d){
@@ -831,14 +856,24 @@ const FXDEF={
   siren:   {e:'🚑',c:'#d93025',tone:[[960,.32,'sawtooth'],[740,.32,'sawtooth'],[960,.32,'sawtooth'],[740,.32,'sawtooth'],[960,.32,'sawtooth'],[740,.45,'sawtooth']],vol:.5},
   hell:    {e:'👹',c:'#7f0000',tone:[[220,.13,'sawtooth'],[208,.13,'sawtooth'],[196,.13,'sawtooth'],[185,.13,'sawtooth'],[175,.13,'sawtooth'],[165,.13,'sawtooth'],[156,.13,'sawtooth'],[147,.13,'sawtooth'],[0,.08],[73,1,'square']],vol:.7},
   heaven:  {e:'😇',c:'#f9ab00',tone:[[587,.06,'triangle'],[740,.06,'triangle'],[880,.06,'triangle'],[1175,.06,'triangle'],[1480,.06,'triangle'],[1760,.06,'triangle'],[2349,.08,'triangle'],[0,.06],[1760,.25,'triangle'],[2349,1,'triangle']],vol:.8},
+  high:    {e:'🌿',c:'#33691e',tone:[[294,.22,'triangle'],[330,.22,'triangle'],[294,.22,'triangle'],[262,.3,'triangle'],[0,.12],[294,.3,'triangle'],[0,.08],[220,1,'triangle']],vol:.8},
+  notfound:{e:'🔍',c:'#5f6368',tone:[[880,.08,'square'],[0,.06],[880,.08,'square'],[0,.06],[440,.4,'square']],vol:.6},
+  y2k:     {e:'💾',c:'#1a73e8',tone:[[1200,.04,'square'],[2400,.04,'square'],[300,.04,'sawtooth'],[1800,.04,'square'],[600,.04,'sawtooth'],[2100,.04,'square'],[900,.04,'sawtooth'],[0,.05],[1650,.08,'square'],[1650,.08,'square'],[0,.05],[110,.5,'sawtooth']],vol:.5},
   final:   {e:'🏁',c:'#f4b400',tone:[[392,.12],[523,.12],[659,.12],[784,.12],[0,.06],[659,.1],[784,.4]]},
 };
 let FXQ=[];
+function notice(e,title,body){ const g=S.g; if(!g) return; g.notices=(g.notices||[]).concat({e,title,body}); }
+function showNotice(){ const g=S.g; if(!g||!g.notices||!g.notices.length) return; const x=g.notices[0];
+  openSheet(`<div style="text-align:center;font-size:56px;line-height:1.1;margin-top:6px">${x.e}</div>
+    <h2 style="margin:8px 0 6px;text-align:center">${esc(x.title)}</h2>
+    <p style="font-size:17px;line-height:1.45;margin:10px 4px;text-align:center">${esc(x.body)}</p>
+    <div class="bar"><button class="btn" id="noticeOk">${g.notices.length>1?'Next':'Got it — let’s play'}</button></div>`,
+  ()=>{ $('noticeOk').onclick=()=>{ g.notices.shift(); save(); if(g.notices.length) showNotice(); else closeSheet(); }; }); }
 function headsUp(rule,title,sub){ if(S.settings[rule]) ev('warn','Heads up: '+title,sub,-1); }
 function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
 const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
   robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
-  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens',mercy:'🏳️ Mercy rule exits',siren:'🚑 911 calls',hell:'👹 Trips to hell',heaven:'😇 Trips to heaven'};
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens',mercy:'🏳️ Mercy rule exits',siren:'🚑 911 calls',hell:'👹 Trips to hell',heaven:'😇 Trips to heaven',high:'🌿 Too high to play',notfound:'🔍 404s',y2k:'💾 Y2K glitches'};
 function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
 function recordFX(){
   if(!S.g) return; const st=stats();
@@ -912,7 +947,7 @@ $('fx').onclick=()=>$('fx').classList.remove('show');
 function testSounds(){
   const was=S.settings.sound; S.settings.sound=true;
   [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
-   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['mercy','Mercy rule!'],['siren','What’s your emergency?'],['hell','Go to hell!'],['heaven','Go to heaven!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['mercy','Mercy rule!'],['siren','What’s your emergency?'],['hell','Go to hell!'],['heaven','Go to heaven!'],['high','Too high to play!'],['notfound','404 Not Found!'],['y2k','Y2K!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
    .forEach(([k,t])=>ev(k,t,'Sound test',-1));
   flushFX(); S.settings.sound=was;
 }
@@ -955,7 +990,7 @@ window.addEventListener('hashchange',checkHash);
 /* ---------- sheets ---------- */
 function openSheet(html,bind){ $('sheet').innerHTML=html; $('overlay').classList.remove('hidden'); bind&&bind(); }
 function closeSheet(){ $('overlay').classList.add('hidden'); }
-$('overlay').onclick=e=>{ if(e.target.id==='overlay' && !(S.g&&S.g.reap)) closeSheet(); };
+$('overlay').onclick=e=>{ if(e.target.id==='overlay' && !(S.g&&(S.g.reap||(S.g.notices&&S.g.notices.length)))) closeSheet(); };
 $('menuBtn').onclick=showMenu;
 function showMenu(){
   openSheet(`<div class="top"><h2 style="margin:0">Settings</h2><button class="btn ghost small" id="closeS">Done</button></div>
