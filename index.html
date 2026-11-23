@@ -142,7 +142,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.8</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.9</p>
 </section>
 
 <!-- GAME -->
@@ -245,7 +245,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closes
   const was=S.settings.sound; S.settings.sound=true; playSeqs([[d.tone,0,d.vol||1]]); S.settings.sound=was;
   b.classList.remove('playing'); void b.offsetWidth; b.classList.add('playing'); },true);
 const GAME_OPTS = [
-  {k:'rounds', t:'Rounds', type:'choice', def:20, opts:[10,15,20]},
+  {k:'rounds', t:'Rounds', type:'choice', def:15, opts:[10,15,20]},
   {k:'dark', t:'Dark mode', d:'Easier on the eyes for late-night games.', type:'bool', def:false},
   {k:'sound', t:'Sound effects', d:'A unique tone plays when each special rule triggers.', type:'bool', def:true},
   {k:'safe', t:'Safe rolls per round', d:'Opening rolls where a 7 can’t bust.', type:'num', def:3, min:0, max:6, step:1},
@@ -254,6 +254,8 @@ const GAME_OPTS = [
 let S = load() || fresh();
 [...RULES,...GAME_OPTS].forEach(r=>{ if(S.settings[r.k]===undefined) S.settings[r.k]=r.def; });
 if(![10,15,20].includes(S.settings.rounds)) S.settings.rounds=[10,15,20].reduce((a,b)=>Math.abs(b-S.settings.rounds)<Math.abs(a-S.settings.rounds)?b:a);
+// every new game starts at 15 rounds; change it on the setup screen before starting
+if(!(S.g&&!S.g.over)) S.settings.rounds=15;
 function fresh(){
   const settings={}; [...RULES,...GAME_OPTS].forEach(r=>settings[r.k]=r.def);
   return {screen:'setup', names:[], settings, g:null, hist:[]};
@@ -451,6 +453,7 @@ function roll(a,b){
       for(let k=perm.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [perm[k],perm[j]]=[perm[j],perm[k]]; }
       const old=g.scores.slice(); const moves=[];
       live.forEach((p,k)=>{ g.scores[p]=old[perm[k]]; moves.push(perm[k]===p?`${S.names[p]} keeps their ${old[p].toLocaleString()}`:`${S.names[p]} ← ${S.names[perm[k]]}’s ${old[perm[k]].toLocaleString()}`); });
+      g.deucesShow=live.map((p,k)=>({p,from:perm[k],was:old[p],now:old[perm[k]]}));
       ev('deuces','Deuces Wild!','Marzi’s Madness · everyone’s scores just got shuffled');
       addLog(`Deuces Wild: ${moves.join(', ')}`);
       bonus+=` 🌪️ Deuces Wild — Marzi’s Madness! Scores shuffled: ${moves.join('; ')}.`;
@@ -736,6 +739,19 @@ function renderGame(pop){
   $('log').innerHTML=g.log.map(l=>`<div>${esc(l)}</div>`).join('');
   flushFX();
   if(g.reap) setTimeout(showReap,0);
+  if(g.deucesShow){ const d=g.deucesShow; delete g.deucesShow; save(); setTimeout(()=>showDeuces(d),1600); }
+}
+function showDeuces(d){
+  const rows=d.map(x=>{ const diff=x.now-x.was, col=diff>0?'#188038':diff<0?'#d93025':'var(--muted)';
+    return `<tr><td style="padding:8px 6px;font-weight:700">${esc(S.names[x.p])}</td>
+      <td style="padding:8px 6px;text-align:right">${x.was.toLocaleString()}</td><td style="padding:8px 4px">→</td>
+      <td style="padding:8px 6px;text-align:right;font-weight:800">${x.now.toLocaleString()}</td>
+      <td style="padding:8px 6px;font-size:13px;color:${col}">${x.from===x.p?'kept their own 💩':`from ${esc(S.names[x.from])} (${diff>0?'+':''}${diff.toLocaleString()})`}</td></tr>`; }).join('');
+  openSheet(`<div class="top"><h2 style="margin:0">🌪️ Deuces Wild — the shuffle</h2></div>
+    <p class="sub" style="margin:10px 0">Here’s who got whose score.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:16px"><tr style="color:var(--muted);font-size:12px;text-align:left"><th style="padding:4px 6px">Player</th><th style="padding:4px 6px;text-align:right">Was</th><th></th><th style="padding:4px 6px;text-align:right">Now</th><th style="padding:4px 6px">Came from</th></tr>${rows}</table>
+    <div class="bar"><button class="btn" id="deucesOk">Got it</button></div>`,
+  ()=>{ $('deucesOk').onclick=closeSheet; });
 }
 
 /* ---------- effects ---------- */
@@ -903,7 +919,7 @@ function showMenu(){
     ()=>{ bindOpts($('sheet'), showMenu); $('closeS').onclick=()=>{closeSheet();renderGame();};
       $('testSnd').onclick=()=>{ closeSheet(); testSounds(); };
       $('helpBtn').onclick=()=>showHelp();
-      $('quitBtn').onclick=()=>{ $('quitBtn').textContent='Tap again to confirm'; $('quitBtn').onclick=()=>{S.screen='setup';S.g=null;save();closeSheet();render();}; }; });
+      $('quitBtn').onclick=()=>{ $('quitBtn').textContent='Tap again to confirm'; $('quitBtn').onclick=()=>{S.screen='setup';S.g=null;S.settings.rounds=15;save();closeSheet();render();}; }; });
 }
 $('scoresBtn').onclick=()=>openSheet(`<div class="top"><h2 style="margin:0">Standings</h2><button class="btn ghost small" id="closeS">Done</button></div><table>${standings()}</table>`,
   ()=>$('closeS').onclick=closeSheet);
@@ -964,7 +980,7 @@ $('copySum').onclick=async()=>{
   catch(e){ $('sumText').classList.remove('hidden'); $('sumText').select(); $('copySum').textContent='Select all & copy below'; }
 };
 $('againBtn').onclick=startGame;
-$('newBtn').onclick=()=>{ S.screen='setup'; S.g=null; S.ui=Object.assign(S.ui||{}, {sp:false}); save(); render(); try{window.scrollTo(0,0);}catch(e){} };
+$('newBtn').onclick=()=>{ S.screen='setup'; S.g=null; S.settings.rounds=15; S.ui=Object.assign(S.ui||{}, {sp:false}); save(); render(); try{window.scrollTo(0,0);}catch(e){} };
 
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function applyTheme(){ document.body.classList.toggle('dark', !!S.settings.dark); const b=$('darkBtn'); if(b) b.textContent=S.settings.dark?'☀️':'🌙'; }
