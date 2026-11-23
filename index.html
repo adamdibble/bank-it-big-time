@@ -142,7 +142,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 5.4</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 5.5</p>
 </section>
 
 <!-- GAME -->
@@ -228,6 +228,7 @@ const RULES = [
   {k:'leet1337', t:'Leet (1,337)', d:'Roll the dice that makes the bank exactly 1,337 and you get +1,337 to your score for your elite skills.', type:'bool', def:true},
   {k:'war1812', t:'War of 1812 (1,812)', d:'Roll the dice that makes the bank exactly 1,812 and you go to war with the leader (or the next-highest player, if you’re the leader). You each roll; the higher roll takes up to 1,812 points from the other. Ties roll again.', type:'bool', def:true},
   {k:'odyssey2001', t:'A Space Odyssey (2,001)', d:'If a roll makes the bank exactly 2,001, the computer takes over: nobody can bank for the next two rolls.', type:'bool', def:true},
+  {k:'vanHalen5150', t:'Van Halen (5,150)', d:'Roll the dice that makes the bank exactly 5,150 and you jump straight to the top: your score becomes 1 point more than the leader’s. Already in the lead? You get +5,150 instead.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
   {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
 ];
@@ -242,10 +243,10 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 }catch(e){} })();
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
-  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',mercy:'🏳️',emergency911:'🚑',hell666:'👹',heaven777:'😇',high420:'🌿',notFound404:'🔍',y2k:'💾',leet1337:'👾',war1812:'⚔️',odyssey2001:'🚀',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',mercy:'🏳️',emergency911:'🚑',hell666:'👹',heaven777:'😇',high420:'🌿',notFound404:'🔍',y2k:'💾',leet1337:'👾',war1812:'⚔️',odyssey2001:'🚀',vanHalen5150:'🎸',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
 const RULE_SOUND={seven70:'lucky7',doublesDouble:'doubles',stackDoubles:'stack',matchRoll:'copycat',straight:'straight',jackpot7:'jackpot',
   sevenEleven:'seven11',sixSeven:'sixseven',hatTrick:'hattrick',blackjack:'blackjack',nineToFive:'ninefive',no7Bonus:'no7',bustCurse:'curse',
-  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',mercy:'mercy',emergency911:'siren',hell666:'hell',heaven777:'heaven',high420:'high',notFound404:'notfound',y2k:'y2k',leet1337:'leet',war1812:'war',odyssey2001:'odyssey',
+  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',mercy:'mercy',emergency911:'siren',hell666:'hell',heaven777:'heaven',high420:'high',notFound404:'notfound',y2k:'y2k',leet1337:'leet',war1812:'war',odyssey2001:'odyssey',vanHalen5150:'vanhalen',
   happyHour:'happy',ocean11:'ocean',finalDouble:'final',suddenDeath:'sudden'};
 // title with its icon; the icon is a button that plays the rule's sound
 const ttl=r=>{ const ic=RULE_ICON[r.k]; if(!ic) return r.t; const k=RULE_SOUND[r.k];
@@ -310,7 +311,7 @@ const RULE_GROUPS=[
   {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven','sixSeven']},
   {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','blackjack','nineToFive','lastChicken','no7Bonus']},
   {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches','district12']},
-  {id:'num',   t:'🎯 Bank-number rules', keys:['notFound404','high420','hell666','heaven777','emergency911','leet1337','war1812','y2k','odyssey2001']},
+  {id:'num',   t:'🎯 Bank-number rules', keys:['notFound404','high420','hell666','heaven777','emergency911','leet1337','war1812','y2k','odyssey2001','vanHalen5150']},
   {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate','deuces']},
   {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','mercy','finalDouble','suddenDeath']},
 ];
@@ -635,6 +636,14 @@ function roll(a,b){
       ev('odyssey','A Space Odyssey!',`The computer took over · no banking for the next two rolls`,g.roller);
       addLog(`${who} made the bank 2,001 → banking locked for two rolls`);
       lastMsg={text:`🚀 The bank hit 2,001! The computer has taken over — nobody can bank for the next two rolls.`,cls:'danger'};
+    } else if(st.vanHalen5150 && g.bank===5150){
+      const r=g.roller, others=S.names.map((_,i)=>i).filter(i=>i!==r && !(g.elim||[]).includes(i));
+      const top=others.length?Math.max(...others.map(i=>g.scores[i])):0, was=g.scores[r];
+      if(was>=top){ g.scores[r]+=5150; } else { g.scores[r]=top+1; }
+      const gain=g.scores[r]-was;
+      ev('vanhalen','Van Halen!',`${who} hit 5,150 · ${was>=top?'+5,150':'jumps to first place'}`,r);
+      addLog(`${who} made the bank 5,150 → Van Halen, +${gain}`);
+      lastMsg={text:`🎸 The bank hit 5,150! ${who} ${was>=top?'was already leading and gets +5,150':`jumps to the top with ${g.scores[r].toLocaleString()} (+${gain.toLocaleString()})`}.`,cls:'good'};
     } else if(st.emergency911 && g.bank===911){
       const r=g.roller, paid=Math.min(1000,Math.max(0,g.scores[r]));
       g.scores[r]-=paid; g.er=(g.er||[]).concat(r); g.banked.push(r);
@@ -915,6 +924,7 @@ const FXDEF={
   leet:    {e:'👾',c:'#00c853',tone:[[1047,.05,'square'],[1319,.05,'square'],[1568,.05,'square'],[2093,.05,'square'],[0,.04],[1568,.05,'square'],[2093,.05,'square'],[2637,.05,'square'],[0,.04],[2093,.05,'square'],[2637,.05,'square'],[3136,.3,'square']],vol:.5},
   war:     {e:'⚔️',c:'#b71c1c',tone:[[294,.12,'square'],[0,.02],[294,.22,'square'],[294,.08,'square'],[392,.28,'square'],[392,.28,'square'],[440,.28,'square'],[440,.28,'square'],[587,.5,'square'],[494,.18,'square'],[392,.3,'square'],[0,.12],[55,.3,'sawtooth'],[0,.15],[49,.45,'sawtooth']],vol:.6},
   odyssey: {e:'🚀',c:'#283593',tone:[[262,.7,'sawtooth'],[392,.7,'sawtooth'],[523,.9,'sawtooth'],[0,.08],[659,.22,'sawtooth'],[622,1,'sawtooth'],[0,.1],[131,.12,'triangle'],[98,.12,'triangle'],[131,.12,'triangle'],[98,.12,'triangle'],[131,.12,'triangle'],[98,.12,'triangle'],[131,.4,'triangle']],vol:.5},
+  vanhalen:{e:'🎸',c:'#d50000',tone:[[659,.045,'sawtooth'],[988,.045,'sawtooth'],[1319,.045,'sawtooth'],[988,.045,'sawtooth'],[659,.045,'sawtooth'],[988,.045,'sawtooth'],[1319,.045,'sawtooth'],[988,.045,'sawtooth'],[698,.045,'sawtooth'],[1047,.045,'sawtooth'],[1397,.045,'sawtooth'],[1047,.045,'sawtooth'],[784,.045,'sawtooth'],[1175,.045,'sawtooth'],[1568,.045,'sawtooth'],[1175,.045,'sawtooth'],[1319,.12,'sawtooth'],[1397,.12,'sawtooth'],[1319,.12,'sawtooth'],[1397,.12,'sawtooth'],[1319,.6,'sawtooth']],vol:.45},
   final:   {e:'🏁',c:'#f4b400',tone:[[392,.12],[523,.12],[659,.12],[784,.12],[0,.06],[659,.1],[784,.4]]},
 };
 let FXQ=[];
@@ -929,7 +939,7 @@ function headsUp(rule,title,sub){ if(S.settings[rule]) ev('warn','Heads up: '+ti
 function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
 const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
   robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
-  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens',mercy:'🏳️ Mercy rule exits',siren:'🚑 911 calls',hell:'👹 Trips to hell',heaven:'😇 Trips to heaven',high:'🌿 Too high to play',notfound:'🔍 404s',y2k:'💾 Y2K glitches',leet:'👾 Leet hits',war:'⚔️ Wars of 1812',odyssey:'🚀 Space Odysseys'};
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens',mercy:'🏳️ Mercy rule exits',siren:'🚑 911 calls',hell:'👹 Trips to hell',heaven:'😇 Trips to heaven',high:'🌿 Too high to play',notfound:'🔍 404s',y2k:'💾 Y2K glitches',leet:'👾 Leet hits',war:'⚔️ Wars of 1812',odyssey:'🚀 Space Odysseys',vanhalen:'🎸 Van Halen jumps'};
 function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
 function recordFX(){
   if(!S.g) return; const st=stats();
@@ -1003,7 +1013,7 @@ $('fx').onclick=()=>$('fx').classList.remove('show');
 function testSounds(){
   const was=S.settings.sound; S.settings.sound=true;
   [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
-   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['mercy','Mercy rule!'],['siren','What’s your emergency?'],['hell','Go to hell!'],['heaven','Go to heaven!'],['high','Too high to play!'],['notfound','404 Not Found!'],['y2k','Y2K!'],['leet','Leet!'],['war','War of 1812!'],['odyssey','A Space Odyssey!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['mercy','Mercy rule!'],['siren','What’s your emergency?'],['hell','Go to hell!'],['heaven','Go to heaven!'],['high','Too high to play!'],['notfound','404 Not Found!'],['y2k','Y2K!'],['leet','Leet!'],['war','War of 1812!'],['odyssey','A Space Odyssey!'],['vanhalen','Van Halen!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
    .forEach(([k,t])=>ev(k,t,'Sound test',-1));
   flushFX(); S.settings.sound=was;
 }
