@@ -142,7 +142,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 5.8</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 5.9</p>
 </section>
 
 <!-- GAME -->
@@ -236,6 +236,9 @@ const RULES = [
   {k:'modem56', t:'56K Modem (56)', d:'Roll the dice that makes the bank exactly 56 and you connect at 56K: +560 downloads into the bank.', type:'bool', def:true},
   {k:'alert1000', t:'Emergency Alert (1,000)', d:'If a roll makes the bank exactly 1,000, everyone still in the round must evacuate: they all bank the 1,000 immediately and the round ends.', type:'bool', def:true},
   {k:'nokia3310', t:'Nokia 3310 (3,310)', d:'Roll the dice that makes the bank exactly 3,310 and you’re indestructible for the rest of the round: if the round busts while you’re still in, you bank the pot anyway.', type:'bool', def:true},
+  {k:'fateKnocks', t:'Fate Knocks', d:'Three 5s in a row (by anyone) is the “da-da-da” — the next roll is the “DUM.” If it’s a 7, everyone still in the round loses half their score (and after the safe rolls, the round busts too). Anything else, and the bank doubles.', type:'bool', def:true},
+  {k:'mountainKing', t:'Hall of the Mountain King', d:'Four table rolls in a row, each higher than the one before (like 4 → 6 → 9 → 11), double the bank.', type:'bool', def:true},
+  {k:'hallelujah', t:'Hallelujah!', d:'A round that reaches 20 rolls without a bust is a miracle: the bank doubles on the 20th roll.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
   {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
 ];
@@ -250,10 +253,10 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 }catch(e){} })();
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
-  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',mercy:'🏳️',emergency911:'🚑',hell666:'👹',heaven777:'😇',high420:'🌿',notFound404:'🔍',y2k:'💾',leet1337:'👾',war1812:'⚔️',odyssey2001:'🚀',vanHalen5150:'🎸',tradingPlaces:'🔄',musicalChairs:'🪑',shareWealth:'🧺',duel:'🤺',modem56:'📞',alert1000:'🚨',nokia3310:'📱',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',mercy:'🏳️',emergency911:'🚑',hell666:'👹',heaven777:'😇',high420:'🌿',notFound404:'🔍',y2k:'💾',leet1337:'👾',war1812:'⚔️',odyssey2001:'🚀',vanHalen5150:'🎸',tradingPlaces:'🔄',musicalChairs:'🪑',shareWealth:'🧺',duel:'🤺',modem56:'📞',alert1000:'🚨',nokia3310:'📱',fateKnocks:'🎻',mountainKing:'⛰️',hallelujah:'🙌',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
 const RULE_SOUND={seven70:'lucky7',doublesDouble:'doubles',stackDoubles:'stack',matchRoll:'copycat',straight:'straight',jackpot7:'jackpot',
   sevenEleven:'seven11',sixSeven:'sixseven',hatTrick:'hattrick',blackjack:'blackjack',nineToFive:'ninefive',no7Bonus:'no7',bustCurse:'curse',
-  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',mercy:'mercy',emergency911:'siren',hell666:'hell',heaven777:'heaven',high420:'high',notFound404:'notfound',y2k:'y2k',leet1337:'leet',war1812:'war',odyssey2001:'odyssey',vanHalen5150:'vanhalen',tradingPlaces:'trading',musicalChairs:'chairs',shareWealth:'share',duel:'duel',modem56:'modem',alert1000:'alert',nokia3310:'nokia',
+  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',mercy:'mercy',emergency911:'siren',hell666:'hell',heaven777:'heaven',high420:'high',notFound404:'notfound',y2k:'y2k',leet1337:'leet',war1812:'war',odyssey2001:'odyssey',vanHalen5150:'vanhalen',tradingPlaces:'trading',musicalChairs:'chairs',shareWealth:'share',duel:'duel',modem56:'modem',alert1000:'alert',nokia3310:'nokia',fateKnocks:'fate',mountainKing:'mountain',hallelujah:'hallelujah',
   happyHour:'happy',ocean11:'ocean',finalDouble:'final',suddenDeath:'sudden'};
 // title with its icon; the icon is a button that plays the rule's sound
 const ttl=r=>{ const ic=RULE_ICON[r.k]; if(!ic) return r.t; const k=RULE_SOUND[r.k];
@@ -315,11 +318,11 @@ function optHTML(r){
   return `<div class="rule"><div><div class="t">${ttl(r)}</div>${r.d?`<div class="d">${r.d}</div>`:''}</div>${ctl}</div>`;
 }
 const RULE_GROUPS=[
-  {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven','sixSeven']},
+  {id:'boost', t:'💰 Bank boosters', keys:['stackDoubles','matchRoll','straight','jackpot7','sevenEleven','sixSeven','mountainKing','hallelujah']},
   {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','blackjack','nineToFive','lastChicken','no7Bonus']},
   {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches','district12']},
   {id:'num',   t:'🎯 Bank-number rules', keys:['modem56','notFound404','high420','hell666','heaven777','emergency911','alert1000','leet1337','war1812','y2k','odyssey2001','nokia3310','vanHalen5150']},
-  {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate','deuces','tradingPlaces','musicalChairs','shareWealth','duel']},
+  {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate','deuces','tradingPlaces','musicalChairs','shareWealth','duel','fateKnocks']},
   {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','mercy','finalDouble','suddenDeath']},
 ];
 function groupedSpecial(){ const sp=RULES.filter(r=>!r.std), used=new Set();
@@ -412,6 +415,7 @@ function roll(a,b){
   const g=S.g, st=S.settings; snap();
   const blind = a===0 && b===0;
   if(g.bankLock>0) g.bankLock--;
+  const fateArmed=!!g.fate; delete g.fate;
   g.lastRoller = g.roller;
   const sum=a+b, dbl=a===b; g.rolls++;
   const safe = g.rolls<=safeN();
@@ -526,6 +530,42 @@ function roll(a,b){
   g.threeRun = (blind || sum!==3) ? 0 : (g.threeRun||0)+1;
   g.tenRun = (blind || sum!==10) ? 0 : (g.tenRun||0)+1;
   g.nineRun = (blind || sum!==9) ? 0 : (g.nineRun||0)+1;
+  g.fiveRun = (blind || sum!==5) ? 0 : (g.fiveRun||0)+1;
+  if(st.fateKnocks && fateArmed){
+    if(sum===7 && !blind){
+      const v=active().filter(i=>!(g.elim||[]).includes(i)), parts=v.map(i=>{ const h=Math.floor(g.scores[i]/2); g.scores[i]-=h; return `${S.names[i]} −${h.toLocaleString()}`; });
+      ev('fatedum','DUM!',`Fate struck · ${v.length?v.map(i=>S.names[i]).join(', ')+' lose half':'nobody left to lose'}`);
+      addLog(`Fate knocked → 7: unbanked players lose half (${parts.join(', ')||'none'})`);
+      bonus+=` 🎻 DUM! Fate rolled a 7${parts.length?': '+parts.join(', '):''}.`;
+    } else if(!bust){
+      g.bank*=2;
+      ev('fatedum','DUM!',`Fate smiles · bank doubles to ${g.bank.toLocaleString()}`);
+      addLog(`Fate knocked → ${blind?'doubles':sum}: bank doubled to ${g.bank}`);
+      bonus+=` 🎻 DUM! Fate smiles — the bank doubles to ${g.bank.toLocaleString()}.`;
+    }
+  }
+  if(st.fateKnocks && g.fiveRun>=3){
+    g.fiveRun=0; g.fate=true;
+    ev('fate','Fate knocks…','Da-da-da… next roll: a 7 halves everyone still in; anything else doubles the bank');
+    addLog(`5-5-5! Fate knocks — the next roll decides`);
+    bonus+=` 🎻 Da-da-da… fate knocks! Next roll: a 7 means everyone still in loses half their score; anything else doubles the bank.`;
+  }
+  if(!bust){
+    g.climb = (!blind && g.climbPrev!=null && sum>g.climbPrev) ? (g.climb||1)+1 : 1;
+    g.climbPrev = blind ? null : sum;
+    if(st.mountainKing && g.climb>=4){
+      g.climb=1; g.bank*=2;
+      ev('mountain','Hall of the Mountain King!',`Four rising rolls · bank doubles to ${g.bank.toLocaleString()}`);
+      addLog(`Four rising rolls → Mountain King, bank doubled to ${g.bank}`);
+      bonus+=` ⛰️ Hall of the Mountain King! Four rolls climbing in a row — the bank doubles to ${g.bank.toLocaleString()}.`;
+    }
+    if(st.hallelujah && g.rolls===20){
+      g.bank*=2;
+      ev('hallelujah','Hallelujah!',`20 rolls without a bust · bank doubles to ${g.bank.toLocaleString()}`);
+      addLog(`20 rolls without a bust → Hallelujah, bank doubled to ${g.bank}`);
+      bonus+=` 🙌 Hallelujah! 20 rolls without a bust — the bank doubles to ${g.bank.toLocaleString()}.`;
+    }
+  }
   if(st.tresLeches && g.threeRun>=3){
     g.threeRun=0;
     const before$=g.scores[g.roller], after=Math.round(before$/MXN.rate);
@@ -595,6 +635,9 @@ function roll(a,b){
     if(h.length===3 && new Set(h).size===3 && Math.max(...h)-Math.min(...h)<=3)
       headsUp('straight','💰 Straight',`${h.join(' · ')} — the right next roll completes a straight (+1,000)`);
     if(g.sixRun===2) headsUp('devil','😈 Devil’s number','Two 6s in a row — one more and unbanked players lose everything');
+    if(g.climb===3) headsUp('mountainKing','⛰️ Mountain King',`Three rising rolls — a roll higher than ${g.climbPrev} doubles the bank`);
+    if(g.rolls===19) headsUp('hallelujah','🙌 Hallelujah',`19 rolls without a bust — survive one more and the bank doubles`);
+    if(g.fiveRun===2) headsUp('fateKnocks','🎻 Fate Knocks','Two 5s in a row — one more and fate knocks');
     if(g.tenRun===2) headsUp('musicalChairs','🪑 Musical Chairs','Two 10s in a row — one more and every score moves one seat over');
     if(g.nineRun===2) headsUp('shareWealth','🧺 Share the Wealth','Two 9s in a row — one more and everyone’s scores are averaged');
     if(g.eightRun===2) headsUp('pirate','🏴‍☠️ Pirate’s booty','Two 8s in a row — whoever rolls the next 8 steals 10% from everyone');
@@ -890,7 +933,7 @@ function endRound(afterBust){
       if(live.length-out.length<2){ gameOver(); return; }
     }
   }
-  g.round++; g.bank=0; g.rolls=0; g.reaped=[]; g.er=[]; g.duelOut=[]; g.indestr=[]; g.bankLock=0; delete g.war; delete g.reap; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.tenRun=0; g.nineRun=0; g.banked=[...(g.elim||[])]; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
+  g.round++; g.bank=0; g.rolls=0; g.reaped=[]; g.er=[]; g.duelOut=[]; g.indestr=[]; g.bankLock=0; delete g.war; delete g.reap; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.tenRun=0; g.nineRun=0; g.fiveRun=0; delete g.fate; g.climb=1; g.climbPrev=null; g.banked=[...(g.elim||[])]; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
   // the dice always pass to the seat after whoever rolled last,
   // whether the round ended in a bust or with everyone banking
   const last = (g.lastRoller!==undefined) ? g.lastRoller : g.roller;
@@ -917,7 +960,7 @@ function gameOver(){
     const [p1,p2]=order, gap=g.scores[p1]-g.scores[p2];
     const trigger = g.sd ? gap===0 : gap<=100;   // first time: within 100; after a bonus round: only an exact tie
     if(trigger){
-      g.reaped=[]; g.er=[]; g.indestr=[]; g.bankLock=0; delete g.war; delete g.reap; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.tenRun=0; g.nineRun=0; g.sd=true; g.sdPlayers=[p1,p2]; g.sdCount=(g.sdCount||0)+1;
+      g.reaped=[]; g.er=[]; g.indestr=[]; g.bankLock=0; delete g.war; delete g.reap; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.tenRun=0; g.nineRun=0; g.fiveRun=0; delete g.fate; g.climb=1; g.climbPrev=null; g.sd=true; g.sdPlayers=[p1,p2]; g.sdCount=(g.sdCount||0)+1;
       g.bank=0; g.rolls=0; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
       g.banked=S.names.map((_,i)=>i).filter(i=>i!==p1&&i!==p2);
       const last=(g.lastRoller!==undefined)?g.lastRoller:g.roller;
@@ -1049,6 +1092,10 @@ const FXDEF={
   nokia:   {e:'📱',c:'#1565c0',tone:[[659,0.11,'triangle'],[587,0.11,'triangle'],[370,0.22,'triangle'],[415,0.22,'triangle'],[554,0.11,'triangle'],[494,0.11,'triangle'],[294,0.22,'triangle'],[330,0.22,'triangle'],[494,0.11,'triangle'],[440,0.11,'triangle'],[277,0.22,'triangle'],[330,0.22,'triangle'],[440,0.44,'triangle']],vol:.9},
   modem:   {e:'📞',c:'#546e7a',tone:[[[350,440],.35],[0,.05],[[770,1336],.07],[0,.04],[[770,1336],.07],[0,.04],[[697,1209],.07],[0,.04],[[941,1336],.07],[0,.04],[[852,1336],.07],[0,.04],[0,.08],[2100,.45],[1200,.035,'square'],[2400,.035,'square'],[1200,.035,'square'],[2400,.035,'square'],[1200,.035,'square'],[2400,.035,'square'],[1200,.035,'square'],[2400,.035,'square'],[1,.7,'noise']],vol:.6},
   alert:   {e:'🚨',c:'#c62828',tone:[[2083,.02,'square'],[2083,.02,'square'],[1563,.02,'square'],[1563,.02,'square'],[2083,.02,'square'],[2083,.02,'square'],[1563,.02,'square'],[1563,.02,'square'],[2083,.02,'square'],[2083,.02,'square'],[1563,.02,'square'],[1563,.02,'square'],[1563,.02,'square'],[2083,.02,'square'],[2083,.02,'square'],[2083,.02,'square'],[1563,.02,'square'],[2083,.02,'square'],[0,.15],[[853,960],1.6]],vol:.45},
+  fate:    {e:'🎻',c:'#4a148c',tone:[[392,.16,'sawtooth'],[0,.03],[392,.16,'sawtooth'],[0,.03],[392,.16,'sawtooth'],[311,.9,'sawtooth'],[0,.2],[349,.16,'sawtooth'],[0,.03],[349,.16,'sawtooth'],[0,.03],[349,.16,'sawtooth'],[294,1.1,'sawtooth']],vol:.6},
+  fatedum: {e:'🎻',c:'#311b92',tone:[[[155,233,311],1.1]],vol:.9},
+  mountain:{e:'⛰️',c:'#33691e',tone:[[247,0.16,'square'],[277,0.16,'square'],[294,0.16,'square'],[330,0.16,'square'],[370,0.16,'square'],[294,0.16,'square'],[370,0.32,'square'],[349,0.16,'square'],[277,0.16,'square'],[349,0.32,'square'],[330,0.16,'square'],[262,0.16,'square'],[330,0.32,'square'],[247,0.1,'square'],[277,0.1,'square'],[294,0.1,'square'],[330,0.1,'square'],[370,0.1,'square'],[294,0.1,'square'],[370,0.1,'square'],[494,0.1,'square'],[440,0.1,'square'],[370,0.1,'square'],[294,0.1,'square'],[370,0.1,'square'],[440,0.4,'square']],vol:.5},
+  hallelujah:{e:'🙌',c:'#f9a825',tone:[[[587,880,1174],0.4],[[440,660,880],0.2],[[494,741,988],0.2],[[440,660,880],0.45],[0,0.12],[[587,880,1174],0.4],[[440,660,880],0.2],[[494,741,988],0.2],[[440,660,880],0.45],[0,0.12],[[440,660,880],0.15],[[587,880,1174],0.15],[[587,880,1174],0.15],[[440,660,880],0.15],[[587,880,1174],0.15],[[587,880,1174],0.6]],vol:.8},
   final:   {e:'🏁',c:'#f4b400',tone:[[392,.12],[523,.12],[659,.12],[784,.12],[0,.06],[659,.1],[784,.4]]},
 };
 let FXQ=[];
@@ -1063,7 +1110,7 @@ function headsUp(rule,title,sub){ if(S.settings[rule]) ev('warn','Heads up: '+ti
 function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
 const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
   robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
-  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens',mercy:'🏳️ Mercy rule exits',siren:'🚑 911 calls',hell:'👹 Trips to hell',heaven:'😇 Trips to heaven',high:'🌿 Too high to play',notfound:'🔍 404s',y2k:'💾 Y2K glitches',leet:'👾 Leet hits',war:'⚔️ Wars of 1812',odyssey:'🚀 Space Odysseys',vanhalen:'🎸 Van Halen jumps',trading:'🔄 Trading Places',chairs:'🪑 Musical Chairs',share:'🧺 Wealth shared',duel:'🤺 Duels',modem:'📞 56K connections',alert:'🚨 Emergency evacuations',nokia:'📱 Nokia moments'};
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens',mercy:'🏳️ Mercy rule exits',siren:'🚑 911 calls',hell:'👹 Trips to hell',heaven:'😇 Trips to heaven',high:'🌿 Too high to play',notfound:'🔍 404s',y2k:'💾 Y2K glitches',leet:'👾 Leet hits',war:'⚔️ Wars of 1812',odyssey:'🚀 Space Odysseys',vanhalen:'🎸 Van Halen jumps',trading:'🔄 Trading Places',chairs:'🪑 Musical Chairs',share:'🧺 Wealth shared',duel:'🤺 Duels',modem:'📞 56K connections',alert:'🚨 Emergency evacuations',nokia:'📱 Nokia moments',fate:'🎻 Fate knocks',fatedum:'🎻 Fate’s verdicts',mountain:'⛰️ Mountain Kings',hallelujah:'🙌 Hallelujahs'};
 function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
 function recordFX(){
   if(!S.g) return; const st=stats();
@@ -1140,7 +1187,7 @@ $('fx').onclick=()=>$('fx').classList.remove('show');
 function testSounds(){
   const was=S.settings.sound; S.settings.sound=true;
   [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
-   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['mercy','Mercy rule!'],['siren','What’s your emergency?'],['hell','Go to hell!'],['heaven','Go to heaven!'],['high','Too high to play!'],['notfound','404 Not Found!'],['y2k','Y2K!'],['leet','Leet!'],['war','War of 1812!'],['odyssey','A Space Odyssey!'],['vanhalen','Van Halen!'],['trading','Trading Places!'],['chairs','Musical Chairs!'],['share','Share the Wealth!'],['duel','Duel!'],['modem','56K Modem!'],['alert','Emergency Alert!'],['nokia','Nokia 3310!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['mercy','Mercy rule!'],['siren','What’s your emergency?'],['hell','Go to hell!'],['heaven','Go to heaven!'],['high','Too high to play!'],['notfound','404 Not Found!'],['y2k','Y2K!'],['leet','Leet!'],['war','War of 1812!'],['odyssey','A Space Odyssey!'],['vanhalen','Van Halen!'],['trading','Trading Places!'],['chairs','Musical Chairs!'],['share','Share the Wealth!'],['duel','Duel!'],['modem','56K Modem!'],['alert','Emergency Alert!'],['nokia','Nokia 3310!'],['fate','Fate knocks…'],['fatedum','DUM!'],['mountain','Hall of the Mountain King!'],['hallelujah','Hallelujah!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
    .forEach(([k,t])=>ev(k,t,'Sound test',-1));
   flushFX(); S.settings.sound=was;
 }
