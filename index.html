@@ -142,7 +142,7 @@ td:last-child{text-align:right;font-weight:800}
   <div id="ruleOpts"></div>
 
   <div style="margin-top:20px"><button class="btn" id="startBtn">Start game</button></div>
-  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 4.9</p>
+  <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">Version 5.0</p>
 </section>
 
 <!-- GAME -->
@@ -218,6 +218,7 @@ const RULES = [
   {k:'district12', t:'District 12', d:'Roll a 12 during the safe rolls and it’s the Reaping: everyone who hasn’t banked yet rolls once more, and the lowest roll is out for the rest of the round. Tied for lowest? Those players roll off until one is lowest.', type:'bool', def:true},
   {k:'robinHood', t:'Robin Hood', d:'Rolling an 11 moves 100 points from the leader’s score to the player in last place.', type:'bool', def:true},
   {k:'lastChicken', t:'Last chicken', d:'If you’re the last player still in the round and you bank before the 7, you get +150 to your score for your nerve. Somebody else has to have been in the round with you.', type:'bool', def:true},
+  {k:'mercy', t:'Mercy rule', d:'At the end of round 10, anyone with less than half the leader’s score is out of the game. Their score freezes and they can’t win. Only matters in 15- and 20-round games.', type:'bool', def:true},
   {k:'no7Bonus', t:'Seven-free bonus', d:'Any player who goes the whole game without rolling a 7 gets +777 at the end.', type:'bool', def:true},
   {k:'jackpot7', t:'Triple 7 jackpot', d:'If the first three (safe) rolls of a round are all 7s, the bank jumps to 7,000.', type:'bool', def:true},
 ];
@@ -232,10 +233,10 @@ try{ const c=JSON.parse(localStorage.getItem('bankMXN')||'null'); if(c&&c.rate>5
 }catch(e){} })();
 const RULE_ICON={seven70:'🍀',doublesDouble:'🎲',stackDoubles:'🔥',matchRoll:'🐱',straight:'💰',finalDouble:'🏁',bustCurse:'💀',
   hatTrick:'🎩',happyHour:'🎉',ocean11:'🌊',suddenDeath:'⚔️',loserBaby:'🗑️',pennyPincher:'🪙',devil:'😈',
-  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
+  sixSeven:'🤲',sevenEleven:'🏪',blackjack:'🃏',nineToFive:'🕘',tresLeches:'🍰',reverse:'🔁',pirate:'🏴‍☠️',deuces:'🌪️',district12:'🐦',lastChicken:'🐔',mercy:'🏳️',robinHood:'🏹',no7Bonus:'🎰',jackpot7:'7️⃣',rounds:'🔢',dark:'🌙',sound:'🔊',safe:'🛟'};
 const RULE_SOUND={seven70:'lucky7',doublesDouble:'doubles',stackDoubles:'stack',matchRoll:'copycat',straight:'straight',jackpot7:'jackpot',
   sevenEleven:'seven11',sixSeven:'sixseven',hatTrick:'hattrick',blackjack:'blackjack',nineToFive:'ninefive',no7Bonus:'no7',bustCurse:'curse',
-  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',
+  loserBaby:'loser',pennyPincher:'penny',devil:'devil',tresLeches:'tres',reverse:'reverse',robinHood:'robin',pirate:'pirate',deuces:'deuces',district12:'reap',lastChicken:'chicken',mercy:'mercy',
   happyHour:'happy',ocean11:'ocean',finalDouble:'final',suddenDeath:'sudden'};
 // title with its icon; the icon is a button that plays the rule's sound
 const ttl=r=>{ const ic=RULE_ICON[r.k]; if(!ic) return r.t; const k=RULE_SOUND[r.k];
@@ -301,7 +302,7 @@ const RULE_GROUPS=[
   {id:'bonus', t:'🎁 Personal bonuses', keys:['hatTrick','blackjack','nineToFive','lastChicken','no7Bonus']},
   {id:'pen',   t:'💀 Penalties', keys:['bustCurse','loserBaby','pennyPincher','devil','tresLeches','district12']},
   {id:'shake', t:'🔀 Shake-ups', keys:['reverse','robinHood','pirate','deuces']},
-  {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','finalDouble','suddenDeath']},
+  {id:'round', t:'📅 Special rounds & endgame', keys:['happyHour','ocean11','mercy','finalDouble','suddenDeath']},
 ];
 function groupedSpecial(){ const sp=RULES.filter(r=>!r.std), used=new Set();
   const out=RULE_GROUPS.map(gp=>{ const rs=gp.keys.map(k=>sp.find(r=>r.k===k)).filter(Boolean); rs.forEach(r=>used.add(r.k)); return {...gp,rules:rs}; });
@@ -653,6 +654,18 @@ function safeN(){ return S.settings.safe; }
 function endRound(afterBust){
   const g=S.g;
   if(g.round>=S.settings.rounds){ gameOver(); return; }
+  if(S.settings.mercy && g.round===10 && !g.sd){
+    g.elim=g.elim||[];
+    const live=S.names.map((_,i)=>i).filter(i=>!g.elim.includes(i)), top=Math.max(...live.map(i=>g.scores[i]));
+    const out=live.filter(i=>g.scores[i]<top/2);
+    if(out.length){
+      g.mercy=(g.mercy||[]).concat(out); g.elim.push(...out);
+      const nm=out.map(i=>S.names[i]).join(', ');
+      ev('mercy','Mercy rule!',`${nm} ${out.length>1?'are':'is'} under half the leader’s score · out of the game`,-1);
+      addLog(`Mercy rule after round 10: ${nm} out (under ${Math.floor(top/2)})`);
+      if(live.length-out.length<2){ gameOver(); return; }
+    }
+  }
   g.round++; g.bank=0; g.rolls=0; g.reaped=[]; delete g.reap; g.firstBankDone=false; g.prevSafe7=false; g.sixRun=0; g.eightRun=0; g.threeRun=0; g.banked=[...(g.elim||[])]; g.pick=[]; g.streak=0; g.lastSum=null; g.tHist=[]; g.pDbl=S.names.map(()=>0);
   // the dice always pass to the seat after whoever rolled last,
   // whether the round ended in a bust or with everyone banking
@@ -660,6 +673,8 @@ function endRound(afterBust){
   g.roller=((last+((g.dir===-1)?-1:1))%n()+n())%n();
   if(g.banked.includes(g.roller)) g.roller=nextRoller(g.roller);
   if(S.settings.happyHour && g.round===5) ev('happy','Happy hour!','Round 5 — every roll counts double',-1);
+  if(S.settings.mercy && g.round===10 && S.settings.rounds>10){ const L=S.names.map((_,i)=>i).filter(i=>!(g.elim||[]).includes(i)), top=Math.max(...L.map(i=>g.scores[i])), risk=L.filter(i=>g.scores[i]<top/2).map(i=>S.names[i]);
+    headsUp('mercy','🏳️ Mercy rule',`After this round, anyone under half the leader’s score is out${risk.length?` — right now that’s ${risk.join(', ')}`:''}`); }
   if(S.settings.ocean11 && g.round===11) ev('ocean','Ocean’s 11!','Round 11 — an 11 is worth 1,100',-1);
   if(S.settings.finalDouble && g.round===S.settings.rounds) ev('final','Final round!','Banking pays ×2 — make it count',-1);
 }
@@ -668,7 +683,7 @@ function gameOver(){
   if(!g.no7Done){
     g.no7Done=true;
     if(S.settings.no7Bonus && g.pRolls){
-      S.names.forEach((nm,i)=>{ if(g.pRolls[i]>0 && !g.p7[i]){ g.scores[i]+=777; addLog(`${nm} never rolled a 7 → +777`); ev('no7','Seven-free bonus!',`${nm} never rolled a 7 · +777`,i); } });
+      S.names.forEach((nm,i)=>{ if(g.pRolls[i]>0 && !g.p7[i] && !(g.elim||[]).includes(i)){ g.scores[i]+=777; addLog(`${nm} never rolled a 7 → +777`); ev('no7','Seven-free bonus!',`${nm} never rolled a 7 · +777`,i); } });
     }
   }
   if(S.settings.suddenDeath && n()-(g.elim||[]).length>=2){
@@ -733,7 +748,7 @@ function renderGame(pop){
     return `<button class="pcard ${b?'banked':''} ${i===g.roller&&!b?'turn':''}" data-i="${i}">
       <div class="n"><span>${esc(S.names[i])}</span>${i===g.roller&&!b?'🎲':''}</div>
       <div class="s">${g.scores[i].toLocaleString()}</div>${behind(i)}
-      <div class="a">${(g.elim||[]).includes(i)?'🗑️ Disqualified':(g.reaped||[]).includes(i)?'🐦 Reaped':g.sd&&g.sdPlayers&&!g.sdPlayers.includes(i)?'Sitting out':b?'Banked ✓':'Tap to BANK'}${st.loserBaby&&g.b7&&g.b7[i]&&!(g.elim||[]).includes(i)?` · busts ${g.b7[i]}/10`:''}${st.pennyPincher&&g.fb&&g.fb[i]&&!(g.elim||[]).includes(i)?` · 🪙 ${g.fb[i]}/5`:''}${st.hatTrick&&g.pDbl&&g.pDbl[i]?` · 🎩 ${g.pDbl[i]}/3`:''}${st.bustCurse&&g.lastBuster===i&&g.bustRun>0&&!(g.elim||[]).includes(i)?` · ⚠️ ${g.bustRun} bust${g.bustRun>1?'s':''} in a row`:''}${st.no7Bonus&&g.pRolls&&g.pRolls[i]&&!g.p7[i]?' · 🎰 no 7s':''}</div></button>`;
+      <div class="a">${(g.mercy||[]).includes(i)?'🏳️ Out (mercy rule)':(g.elim||[]).includes(i)?'🗑️ Disqualified':(g.reaped||[]).includes(i)?'🐦 Reaped':g.sd&&g.sdPlayers&&!g.sdPlayers.includes(i)?'Sitting out':b?'Banked ✓':'Tap to BANK'}${st.loserBaby&&g.b7&&g.b7[i]&&!(g.elim||[]).includes(i)?` · busts ${g.b7[i]}/10`:''}${st.pennyPincher&&g.fb&&g.fb[i]&&!(g.elim||[]).includes(i)?` · 🪙 ${g.fb[i]}/5`:''}${st.hatTrick&&g.pDbl&&g.pDbl[i]?` · 🎩 ${g.pDbl[i]}/3`:''}${st.bustCurse&&g.lastBuster===i&&g.bustRun>0&&!(g.elim||[]).includes(i)?` · ⚠️ ${g.bustRun} bust${g.bustRun>1?'s':''} in a row`:''}${st.no7Bonus&&g.pRolls&&g.pRolls[i]&&!g.p7[i]&&!(g.elim||[]).includes(i)?' · 🎰 no 7s':''}</div></button>`;
   }).join('');
   $('pcards').querySelectorAll('.pcard').forEach(c=>c.onclick=()=>bankPlayer(+c.dataset.i));
   $('log').innerHTML=g.log.map(l=>`<div>${esc(l)}</div>`).join('');
@@ -785,6 +800,7 @@ const FXDEF={
   blackjack:{e:'🃏',c:'#202124',tone:[[1319,.05,'square'],[0,.03],[1319,.05,'square'],[0,.07],[698,.1,'triangle'],[880,.1,'triangle'],[1047,.1,'triangle'],[1397,.35,'triangle']]},
   ninefive:{e:'🕘',c:'#188038',tone:[[2637,.012,'square'],[0,.07],[2349,.012,'square'],[0,.05],[2794,.012,'square'],[0,.08],[2489,.012,'square'],[0,.04],[2637,.012,'square'],[0,.06],[2217,.012,'square'],[0,.05],[2794,.012,'square'],[0,.12],[1175,.05,'square'],[1047,.05,'square'],[0,.06],[2093,.5]]},
   chicken: {e:'🐔',c:'#c5221f',tone:[[740,.035,'square'],[0,.05],[740,.035,'square'],[0,.05],[740,.035,'square'],[0,.09],[622,.05,'square'],[1245,.3,'sawtooth']],vol:.6},
+  mercy:   {e:'🏳️',c:'#5f6368',tone:[[392,.3,'triangle'],[392,.12,'triangle'],[523,.7,'triangle'],[0,.12],[392,.3,'triangle'],[523,.12,'triangle'],[659,.9,'triangle']],vol:.8},
   final:   {e:'🏁',c:'#f4b400',tone:[[392,.12],[523,.12],[659,.12],[784,.12],[0,.06],[659,.1],[784,.4]]},
 };
 let FXQ=[];
@@ -792,7 +808,7 @@ function headsUp(rule,title,sub){ if(S.settings[rule]) ev('warn','Heads up: '+ti
 function ev(kind,title,sub,who){ FXQ.push({kind,title,sub,who: who!==undefined ? who : (S.g ? S.g.roller : -1)}); }
 const RULE_LABEL={lucky7:'🍀 Lucky 7s',doubles:'🎲 Doubles',stack:'🔥 Stacked doubles (×4)',copycat:'🐱 Copycats',straight:'💰 Team straights',
   robin:'🏹 Robin Hood heists',jackpot:'7️⃣ Triple-7 jackpots',curse:'💀 Triple bust curses',hattrick:'🎩 Doubles hat tricks',
-  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens'};
+  ocean:'🌊 Ocean’s 11s',final:'🏁 Frenzy banks',sixseven:'🤲 6-7 saves',deuces:'🌪️ Deuces Wild shuffles',reap:'🐦 Reapings',reaped:'🚪 Players reaped',seven11:'🏪 7-Elevens',blackjack:'🃏 Blackjacks',ninefive:'🕘 9 to 5 paydays',tres:'🍰 Tres leches',reverse:'🔁 Reverses',pirate:'🏴‍☠️ Pirate’s booty',no7:'🎰 Seven-free bonuses',chicken:'🐔 Last chickens',mercy:'🏳️ Mercy rule exits'};
 function stats(){ const g=S.g; if(!g.st) g.st={p:S.names.map(()=>({rolls:0,sevens:0,busts:0,dbl:0,banks:0,bankSum:0,big:0,lost:0})),rules:{},biggestPot:0,longest:0,totalRolls:0}; return g.st; }
 function recordFX(){
   if(!S.g) return; const st=stats();
@@ -866,7 +882,7 @@ $('fx').onclick=()=>$('fx').classList.remove('show');
 function testSounds(){
   const was=S.settings.sound; S.settings.sound=true;
   [['lucky7','Lucky 7!'],['doubles','Doubles!'],['stack','Stacked doubles!'],['copycat','Copycat!'],['straight','Straight!'],
-   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
+   ['robin','Robin Hood!'],['jackpot','JACKPOT!'],['reap','District 12 — the Reaping!'],['chicken','Last chicken!'],['mercy','Mercy rule!'],['reaped','Reaped!'],['deuces','Deuces Wild!'],['sixseven','6-7!'],['seven11','7-Eleven!'],['blackjack','Blackjack!'],['ninefive','9 to 5!'],['warn','Heads up!'],['tres','¡Tres leches!'],['reverse','Reverse!'],['pirate','Pirate’s booty!'],['devil','The devil’s number!'],['penny','Penny pincher!'],['loser','I’m a loser, baby!'],['sudden','Sudden death!'],['hattrick','Doubles hat trick!'],['happy','Happy hour!'],['ocean','Ocean’s 11!'],['bust','BUST!'],['curse','Triple bust curse!'],['final','Final round!'],['no7','Seven-free bonus!']]
    .forEach(([k,t])=>ev(k,t,'Sound test',-1));
   flushFX(); S.settings.sound=was;
 }
@@ -924,9 +940,9 @@ function showMenu(){
 $('scoresBtn').onclick=()=>openSheet(`<div class="top"><h2 style="margin:0">Standings</h2><button class="btn ghost small" id="closeS">Done</button></div><table>${standings()}</table>`,
   ()=>$('closeS').onclick=closeSheet);
 function standings(){
-  const el=S.g.elim||[];
-  return S.names.map((nm,i)=>({nm,s:S.g.scores[i],x:el.includes(i)})).sort((a,b)=>(a.x-b.x)||(b.s-a.s))
-    .map((p,k,arr)=>p.x?`<tr style="opacity:.5"><td>🗑️ ${esc(p.nm)} <span style="font-size:13px">(disqualified)</span></td><td>DQ</td></tr>`:`<tr><td>${k+1}. ${esc(p.nm)}${k&&arr[0].s>p.s?` <span style="color:var(--warn);font-size:13px">(${(arr[0].s-p.s).toLocaleString()} behind)</span>`:''}</td><td>${p.s.toLocaleString()}</td></tr>`).join('');
+  const el=S.g.elim||[], mc=S.g.mercy||[];
+  return S.names.map((nm,i)=>({nm,s:S.g.scores[i],x:el.includes(i),m:mc.includes(i)})).sort((a,b)=>(a.x-b.x)||(b.s-a.s))
+    .map((p,k,arr)=>p.m?`<tr style="opacity:.5"><td>🏳️ ${esc(p.nm)} <span style="font-size:13px">(out — mercy rule)</span></td><td>${p.s.toLocaleString()}</td></tr>`:p.x?`<tr style="opacity:.5"><td>🗑️ ${esc(p.nm)} <span style="font-size:13px">(disqualified)</span></td><td>DQ</td></tr>`:`<tr><td>${k+1}. ${esc(p.nm)}${k&&arr[0].s>p.s?` <span style="color:var(--warn);font-size:13px">(${(arr[0].s-p.s).toLocaleString()} behind)</span>`:''}</td><td>${p.s.toLocaleString()}</td></tr>`).join('');
 }
 
 /* ---------- end ---------- */
@@ -953,10 +969,11 @@ function buildSummary(){
     return `${RULE_LABEL[k]||k}: ${r.n}${by?` (${by})`:''}`; });
   const facts=[`${g.round} rounds${g.sd?` + ${g.sdCount} sudden-death round${g.sdCount>1?'s':''}`:''}, ${T.totalRolls} rolls`, `Biggest pot: ${fmt(T.biggestPot)}`, `Longest round: ${T.longest} rolls`];
   const el=g.elim||[];
-  const order=N.map((nm,i)=>({nm,s:g.scores[i],x:el.includes(i)})).sort((x,y)=>(x.x-y.x)||(y.s-x.s));
+  const mc=g.mercy||[];
+  const order=N.map((nm,i)=>({nm,s:g.scores[i],x:el.includes(i),m:mc.includes(i)})).sort((x,y)=>(x.x-y.x)||(y.s-x.s));
   const text=[`🎲 Bank It! Big Time! — game recap`,
     `🏆 ${$('winner').textContent} (${fmt(order[0].s)})`, '',
-    ...order.map((p,k)=>p.x?`🗑️ ${p.nm} — disqualified (10 busts)`:`${k+1}. ${p.nm} — ${fmt(p.s)}${k?` (${fmt(order[0].s-p.s)} behind)`:''}`), '',
+    ...order.map((p,k)=>p.m?`🏳️ ${p.nm} — ${fmt(p.s)} (out, mercy rule)`:p.x?`🗑️ ${p.nm} — disqualified (10 busts)`:`${k+1}. ${p.nm} — ${fmt(p.s)}${k?` (${fmt(order[0].s-p.s)} behind)`:''}`), '',
     'AWARDS', ...awards, '',
     'FUN FACTS', ...facts, '', `Play it: ${PLAY_URL}`].join('\n');
   return {awards,highlights,facts,text};
